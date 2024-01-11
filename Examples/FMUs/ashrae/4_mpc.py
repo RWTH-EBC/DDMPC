@@ -1,14 +1,14 @@
 from Examples.FMUs.ashrae.config import *
 
 """ Choose the process models """
-TAirRoom_predictor = load_NeuralNetwork("TAirRoom_ann")
+# TAirRoom_predictor = load_NeuralNetwork("TAirRoom_ann")
 # Q_flowAhu_predictor = load_NeuralNetwork("Q_flowAhu_ann")
 
 # TAirRoom_predictor: GaussianProcess = load_GaussianProcess('TAirRoom_GPR')
-Q_flowAhu_predictor: GaussianProcess = load_GaussianProcess("Q_flowAhu_GPR")
+# Q_flowAhu_predictor: GaussianProcess = load_GaussianProcess("Q_flowAhu_GPR")
 
-# TAirRoom_predictor: LinearRegression = load_LinearRegression("TAirRoom_linreg")
-# Q_flowAhu_predictor: LinearRegression = load_LinearRegression("Q_flowAhu_linreg")
+TAirRoom_predictor: LinearRegression = load_LinearRegression("TAirRoom_linreg")
+Q_flowAhu_predictor: LinearRegression = load_LinearRegression("Q_flowAhu_linreg")
 
 """ Set the comfort boundaries """
 TAirRoom.mode = Economic(
@@ -70,9 +70,9 @@ for repetition in range(5):  # Start online learning loop
     TAirRoom_TrainingData.split(0.7, 0.15, 0.15)
     TAirRoom_predictor.fit(  # Arguments of the fit function may vary depending on model type
         training_data=TAirRoom_TrainingData,
-        epochs=50,
-        batch_size=20,
-        verbose=1,
+        # epochs=50,
+        # batch_size=20,
+        # verbose=1,
     )
     TAirRoom_predictor.test(training_data=TAirRoom_TrainingData)
     Q_flowAhu_TrainingData.clear()

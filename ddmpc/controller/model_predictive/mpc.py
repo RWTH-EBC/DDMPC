@@ -44,7 +44,7 @@ class ModelPredictive(Controller):
         current_time = past['SimTime'].iloc[-1]
 
         # get the forecast and past data
-        forecast = self._forecast_callback(length=int(self.nlp.N*self.step_size))
+        forecast = self._forecast_callback(horizon_in_seconds=int(self.nlp.N*self.step_size))
 
         # solve the nlp
         par_vals: list[float] = self._get_par_vals(past, forecast, current_time)
