@@ -1,13 +1,13 @@
-import pandas as pd
-import json
-from urllib.parse import urljoin
+import typing
 
 import pandas as pd
-import requests
 
 import ddmpc.utils.formatting
 from ddmpc.modeling.modeling import Model
-from ddmpc.systems.base_class import System
+from ddmpc.systems import System
+from ddmpc.systems.exceptions import ReadingError, SimulationError
+from urllib.parse import urljoin
+import requests
 
 
 class BopTest(System):
@@ -17,7 +17,6 @@ class BopTest(System):
             model: Model,
             step_size: int,
             url: str,
-            name: str,
     ):
 
         super(BopTest, self).__init__(
@@ -26,14 +25,50 @@ class BopTest(System):
         )
 
         self.url = url
-        self.controls = dict()
-        self.measurements = dict()
 
-        self.inputs = requests.get(url=urljoin(url, 'inputs')).json()['payload']
-        self.outputs = requests.get(url=urljoin(url, 'measurements')).json()['payload']
+        self.url:                   str = url
+        self.url_advance:           str = urljoin(url, url='advance')
+        self.url_inputs:            str = urljoin(url, url='inputs')
+        self.url_measurements:      str = urljoin(url, url='measurements')
+        self.url_step:              str = urljoin(url, url='step')
+        self.url_advance:           str = urljoin(url, url='advance')
+        self.url_initialize:        str = urljoin(url, url='initialize')
+        self.url_scenario:          str = urljoin(url, url='scenario')
+        self.url_forecast:          str = urljoin(url, url='forecast')
+        self.url_forecast_points:   str = urljoin(url, url='forecast_points')
 
-        # forecast
-        self.forecast_names = list(requests.get(url=urljoin(self.url, 'forecast_points')).json()['payload'].keys())
+        self.measurements: typing.Optional[dict] = None
+        self.controls: dict = dict()
+
+        self.inputs = self.get(url=self.url_inputs)
+        self.outputs = self.get(url=self.url_measurements)
+        self.forecast_params = self.get(url=self.url_forecast_points)
+        self.forecast_names = list(self.forecast_params.keys())
+
+        self.forecast_horizon_in_seconds = 0
+
+    @staticmethod
+    def get(url: str) -> dict:
+        return BopTest._extract_payload_(requests.get(url=url))
+
+    @staticmethod
+    def put(url: str, data: dict) -> dict:
+        return BopTest._extract_payload_((requests.put(url=url, json=data)))
+
+    @staticmethod
+    def post(url: str, data: dict) -> dict:
+        return BopTest._extract_payload_((requests.post(url=url, json=data)))
+
+    @staticmethod
+    def _extract_payload_(response: requests.Response) -> dict:
+
+        if not isinstance(response, requests.Response):
+            raise TypeError('Response not of Type request.Response!')
+
+        if response.status_code != 200:
+            raise requests.HTTPError(response.text)
+
+        return response.json()['payload']
 
     def setup(
             self,
@@ -43,120 +78,77 @@ class BopTest(System):
             active_control_layers:  dict = None,
     ):
 
-        # start time
-        assert start_time >= 0, 'Please make sure the start time is greater or equal to zero.'
+        if start_time < 0:
+            raise SimulationError('Please make sure the start time is greater or equal to zero.')
 
         # set step size
-        requests.put(url=urljoin(self.url, 'step'), data={'step': self.step_size})
+        self.put(url=self.url_step, data={'step': self.step_size})
 
         # initialization
         init_params = {'start_time': start_time, 'warmup_period': warmup_period}
-        self.measurements = requests.put(url=urljoin(self.url, 'initialize'), data=init_params).json()['payload']
-        forecast = self.get_forecast(length=1)
-        self.measurements.update({'PriceElectricPowerConstant':forecast['PriceElectricPowerConstant'][0],
-                           'PriceElectricPowerHighlyDynamic':forecast['PriceElectricPowerHighlyDynamic'][0],
-                           'PriceElectricPowerDynamic':forecast['PriceElectricPowerDynamic'][0]})
-
-        # update all time variables
-        self.measurements['SimTime'] = self.measurements['time']
-        self.time = self.measurements['time']
-
-        if scenario is not None:
-            self.measurements = requests.put(urljoin(self.url, 'scenario'), data=scenario).json()['payload']
-            self.measurements['SimTime'] = self.measurements['time']
-            self.system_time = self.measurements['time']
-            forecast = self.get_forecast(length=1)
-            self.measurements.update({'PriceElectricPowerConstant': forecast['PriceElectricPowerConstant'][0],
-                                      'PriceElectricPowerHighlyDynamic': forecast['PriceElectricPowerHighlyDynamic'][0],
-                                      'PriceElectricPowerDynamic': forecast['PriceElectricPowerDynamic'][0]})
-
-
+        measurements = self.put(url=self.url_initialize, data=init_params)
+        self.time = measurements['time']
 
         self.controls.clear()
+
         if active_control_layers is not None:
             self.controls.update(active_control_layers)
 
+        # initial advance to generate measurements
+        self.advance()
+
     @property
     def scenario(self):
-        return requests.get(url=urljoin(self.url, 'scenario')).json()['payload']
+        return requests.get(url=urljoin(self.url, 'scenario')).json()
 
-    def do_step(self):
+    def advance(self):
 
-        def advance():
-            """ advances the simulation by one step """
-
-            url_advance = urljoin(self.url, 'advance')
-            raw_measurements = requests.post(url_advance, self.controls)
-
-            try:
-                self.measurements.update(
-                    raw_measurements.json()['payload']
-                )
-
-            except json.decoder.JSONDecodeError:
-
-                # if the Response is empty manually advance the simulation time by one
-                self.measurements['time'] = self.measurements['time'] + self.step_size
-
-                print('Failed to convert Response to json at t=', self.measurements['time'])
-                print('Continuing with the last measurements.')
-
-        advance()
-
-        # update all time variables
-        self.measurements['SimTime'] = self.measurements['time']
+        self.measurements = self.post(url=self.url_advance, data=self.controls)
         self.time = self.measurements['time']
 
     def close(self):
         pass
 
-    def read_values(self) -> dict:
+    def read(self) -> dict:
 
-        for var_name in self._readable_columns:
-            assert var_name in self.measurements.keys(),\
-                f'The feature with var_name: "{var_name}" can not be read. Measurements: {self.measurements}'
-        value_dict = {var_name: self.measurements[var_name] for var_name in ['SimTime'] + self._readable_columns}
-        forecast = self.get_forecast(length=24*60*60)
-        value_dict.update({'PriceElectricPowerConstant':forecast['PriceElectricPowerConstant'][0],
-                           'PriceElectricPowerHighlyDynamic':forecast['PriceElectricPowerHighlyDynamic'][0],
-                           'PriceElectricPowerDynamic':forecast['PriceElectricPowerDynamic'][0]})
+        # the electricity prices are not contained in the measurements, so we have to access them through the forecast
+        forecast = self.get_forecast(horizon_in_seconds=1)
+        columns_to_extract = ['PriceElectricPowerConstant', 'PriceElectricPowerDynamic', 'PriceElectricPowerHighlyDynamic']
+        forecast_dict = {column: forecast.at[0, column] for column in columns_to_extract}
+        self.measurements.update(forecast_dict)
 
-        return value_dict
+        # this makes sure all measurements are actually there
+        reading_errors = list()
+        for name in self.readable:
+            if name not in self.measurements.keys():
+                reading_errors.append(name)
 
-    def write_values(self, control_dict: dict):
+        if len(reading_errors) > 0:
+            raise ReadingError(f'The following variables could not be read: {reading_errors}')
+
+        # only return the values for the readable columns
+        return {var_name: self.measurements[var_name] for var_name in ['time'] + self.readable}
+
+    def write(self, values: dict):
+        self.controls.update(values)
+
+    def values(self, control_dict: dict):
         """ Updates the control dict with new inputs """
 
         self.controls.update(control_dict)
 
-    def _get_forecast(self, length: int) -> pd.DataFrame:
+    def _get_forecast(self, horizon_in_seconds: int) -> pd.DataFrame:
 
-        def request_forecast() -> pd.DataFrame:
-
-            try:
-                return pd.DataFrame(requests.put(urljoin(self.url, 'forecast'),
-                                                 data={'interval': self.step_size,
-                                                       'horizon': length,
-                                                       'point_names': self.forecast_names}).json()['payload'])
-
-
-            except json.decoder.JSONDecodeError:
-
-                print('Requesting forecast failed. Trying again...')
-
-                return request_forecast()
-
-        forecast = request_forecast()
-        forecast.rename(columns={'time': 'SimTime'}, inplace=True)
+        data = {'point_names': self.forecast_names, 'horizon': horizon_in_seconds, 'interval': self.step_size}
+        response = self.put(self.url_forecast, data=data)
+        forecast = pd.DataFrame(response)
 
         return forecast
-
 
     def summary(self):
 
         print('----------------------- BopTest Summary -----------------------')
-        print(f'Name:           {self.name}')
-        print(f'URL:            {self.url}')
-        print(f'Scenario:            {self.url}')
+        print(f'URL:        {self.url}')
         print(self.scenario)
 
         print(f'Inputs:')
@@ -173,10 +165,3 @@ class BopTest(System):
 
         ddmpc.utils.formatting.print_table(rows=rows)
         print()
-
-    def get_kpis(self):
-        """
-        Get KPIs at the end of the Simulation
-        :return:
-        """
-        return requests.get(url=urljoin(self.url, 'kpi')).json()['payload']

@@ -1,7 +1,5 @@
 from ddmpc import *
 
-file_manager.experiment = "MPC_Testing"
-
 TAirRoom = Controlled(
     source=Readable(
         name="TAir",
@@ -108,7 +106,6 @@ system = BopTest(
     model=model,
     step_size=one_minute * 15,
     url="http://127.0.0.1:5000",
-    name="hhp",
 )
 
 power_hp_TrainingData = TrainingData(

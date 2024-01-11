@@ -1,15 +1,14 @@
+import pathlib
 import shutil
-from os.path import isfile
 from pathlib import Path
-from typing import Optional, Union
-
-import fmpy
-import fmpy.fmi2
+from typing import Union, Optional
 import pandas as pd
-
-from ddmpc.modeling.modeling import Model
-from ddmpc.systems.base_class import System
-from ddmpc.utils.pickle_handler import write_pkl, read_pkl
+import ddmpc.systems
+from ddmpc.systems import System
+from ddmpc.systems.exceptions import SimulationError
+from ddmpc.utils.pickle_handler import read_pkl, write_pkl
+from ddmpc.utils.file_manager import file_manager
+import fmpy.fmi2
 
 
 class FMU(System):
@@ -19,39 +18,30 @@ class FMU(System):
 
     def __init__(
             self,
-            model:      Model,
+            model:      ddmpc.modeling.Model,
             step_size:  int,
-            name:       str,
-            directory:  Path = Path('stored_data', 'FMUs'),
+            name: str,
     ):
         """
         initialize FMU System class
         :param model:           Model Ontology
         :param step_size:       time step size of the fmu
-        :param fmu_name:        name of the fmu (must match with stored name)
-        :param directory:       directory where the fmu file is stored
+        :param name:            name of the fmu (must match with stored name)
         """
 
-        # initialize parent class
+        self.fmu:           Optional[fmpy.fmi2.FMU2Slave] = None
+        self.name:          str = name
+
+        # description and variables
+        self.description:   fmpy.model_description.ModelDescription = self._get_description()
+        self.variable_dict = {variable.name: variable for variable in self.description.modelVariables}
+
         super().__init__(
             model=model,
             step_size=step_size,
         )
 
-        # fmu instance
-        self.name:          str = name
-        self.fmu:           Optional[FMU] = None
-        self.directory:     Union[Path, str] = directory
-
-        # description and variables
-        self.description:   fmpy.model_description.ModelDescription = self._get_description()
-        self.variable_dict: dict[str] = self._get_variable_dict()
-
-        # check variables
-        self._check_variables()
-
-        # disturbances
-        self.disturbances: pd.DataFrame | None = None
+        self.disturbances: Optional[pd.DataFrame] = None
 
         try:
             self.load_disturbances()
@@ -59,111 +49,52 @@ class FMU(System):
         except FileNotFoundError:
             self.simulate_disturbances()
 
-    def setup(
-            self,
-            start_time:     int,
-            instance_name:  str = 'fmu',
-            sim_tolerance:  float = 0.0001,
+    @property
+    def fmu_path(self):
+        """ Returns the path of the fmu """
 
-    ):
+        return Path(file_manager.fmu_dir, self.name)
+
+    def _get_description(self) -> fmpy.model_description.ModelDescription:
         """
-        Set up the FMU environment for a given start time
-        :param start_time:  Time at which the simulation is started (in s of the year)
-        :param instance_name: Name of the fmu instance
-        :param sim_tolerance: Simulation tolerance
+        Read the description of the given fmu file
+        :return: model_description
         """
 
-        # start time
-        assert start_time >= 0, 'Please make sure the start time is greater or equal to zero.'
-        assert self.fmu is None, 'Please make sure the simulation was closed'
+        if self.fmu_path.is_file():
+            file = open(self.fmu_path)
 
-        self.time = start_time
+        else:
+            raise AttributeError(f'FMU file with path "{self.fmu_path}" does not exist.')
 
-        # create a slave
-        self.fmu = fmpy.fmi2.FMU2Slave(
-            guid=self.description.guid,
-            unzipDirectory=fmpy.extract(self.fmu_path),
-            modelIdentifier=self.description.coSimulation.modelIdentifier,
-            instanceName=instance_name
-        )
-        self.fmu.instantiate()
-        self.fmu.reset()
-        self.fmu.setupExperiment(
-            startTime=start_time,
-            tolerance=sim_tolerance
-        )
-        self.fmu.enterInitializationMode()
-        self.fmu.exitInitializationMode()
+        # read model description
+        model_description = fmpy.read_model_description(self.fmu_path.as_posix(), validate=False)
 
-    def close(self):
-        """ Closes the simulation and clears the fmu object """
+        # close fmu file
+        file.close()
 
-        self.fmu.terminate()
-        self.fmu.freeInstance()
-        shutil.rmtree(fmpy.extract(self.fmu_path))
-
-        del self.fmu
-        self.fmu = None
-
-        del self.last_df
-        self.last_df = pd.DataFrame()
-
-    def do_step(self):
-        """ Simulates one step """
-
-        self.fmu.doStep(
-            currentCommunicationPoint=self.time,
-            communicationStepSize=self.step_size
-        )
-
-        # increment system time
-        self.time += self.step_size
-
-    # -------------------- utility -------------------
-
-    def summary(self):
-        """ prints the summary of the FMU """
-
-        fmpy.dump(str(self.fmu_path))
-
-    def _check_variables(self):
-        """ checks if the BaseVariables from the Model are really included in the fmu before running """
-
-        for base_var in self.model.readable:
-
-            assert base_var.read_name in self.variable_dict, \
-                f'The BaseVariable {base_var} is not included in the FMU. ' \
-                f'Please call summary to get an overview of all Variables.'
-
-    # ------------ disturbances handling  ------------
-
-    def _get_forecast(self, length: int) -> pd.DataFrame:
-        """ Returns forecast for the current prediction horizon """
-
-        return self.disturbances[
-            (self.time <= self.disturbances['SimTime']) &
-            (self.disturbances['SimTime'] <= (self.time + length))
-            ].copy()
+        # return model  description
+        return model_description
 
     @property
-    def disturbances_filepath(self) -> str:
+    def disturbances_filepath(self) -> Path:
         """ The filepath where the disturbances are stored """
 
-        return f'{self.directory}//{self.name}_disturbances_{self.step_size}.pkl'
+        return Path(f'{file_manager.fmu_dir}//{self.name}_disturbances_{self.step_size}.pkl')
 
     def load_disturbances(self):
         """ Loads the disturbances DataFrame from the disc """
 
         # check if the disturbances already exist.
-        if isfile(self.disturbances_filepath):
-            self.disturbances = read_pkl(filename=self.disturbances_filepath)
+        if pathlib.Path.is_file(self.disturbances_filepath):
+            self.disturbances = read_pkl(filename=str(self.disturbances_filepath))
         else:
             raise FileNotFoundError(f'Disturbances missing at "{self.disturbances_filepath}".')
 
     def simulate_disturbances(self, start_time: int = 0, stop_time: int = 3600 * 24 * 380, controllers: list = None):
         """
         Simulates the fmu file and extracts only the disturbances from it.
-        Afterwards the DataFrame is stored at self.disturbances_filepath.
+        Afterward the DataFrame is stored at self.disturbances_filepath.
 
         :param controllers:             Tuple with all controllers
         :param start_time:              Start of the disturbances DataFrame
@@ -182,49 +113,23 @@ class FMU(System):
 
             print('Simulating the disturbances failed due to an FMICallException. Continuing anyway...')
 
-            self.close()
-
         else:
 
-            df = df[['SimTime'] + [d.source.col_name for d in self.model.disturbances]]
+            df = df[['time'] + [d.source.col_name for d in self.model.disturbances]]
 
             # save as pickle
-            write_pkl(df, self.disturbances_filepath, override=True)
+            write_pkl(df, str(self.disturbances_filepath), override=True)
 
             # save to df
             self.disturbances = df
 
-        finally:
-            # close the fmu
-            self.close()
+    def _get_forecast(self, length: int) -> pd.DataFrame:
+        """ Returns forecast for the current prediction horizon """
 
-    # ------------ internal use only ------------
+        maximum_time = self.time <= self.disturbances['time']
+        minimum_time = self.disturbances['time'] <= (self.time + length)
 
-    @property
-    def fmu_path(self) -> Path:
-        return Path(self.directory, self.name)
-
-    def _get_description(self) -> fmpy.model_description.ModelDescription:
-        """
-        Read the description of the given fmu file
-        :return: model_description
-        """
-
-        # open fmu file
-        if self.fmu_path.is_file():
-            file = open(self.fmu_path)
-
-        else:
-            raise AttributeError(f'FMU file with path "{self.fmu_path}" does not exist.')
-
-        # read model description
-        model_description = fmpy.read_model_description(self.fmu_path.as_posix(), validate=False)
-
-        # close fmu file
-        file.close()
-
-        # return model  description
-        return model_description
+        return self.disturbances[maximum_time & minimum_time].copy()
 
     def _get_variable_dict(self) -> dict:
         """
@@ -240,25 +145,20 @@ class FMU(System):
 
         return variables
 
-    # ------------ fmu interaction ------------
-
-    def read_values(self) -> dict:
+    def read(self) -> dict:
         """ Reads current variable values and returns them as a dict """
 
-        res = dict()
-        for var_name in self.readable:
-            res[var_name] = self._read_value(var_name)
+        values = {name: self._read(name) for name in self.readable}
+        values['time'] = self.time
 
-        # add current time to results
-        res['SimTime'] = self.time
-        return res
+        return values
 
-    def _read_value(self, var_name: str):
+    def _read(self, name: str):
         """
         Read a single variable.
         """
 
-        variable = self.variable_dict[var_name]
+        variable = self.variable_dict[name]
         vr = [variable.valueReference]
 
         if variable.type == 'Real':
@@ -271,17 +171,13 @@ class FMU(System):
         else:
             raise Exception("Unsupported type: %s" % variable.type)
 
-    def write_values(self, control_dict: dict):
+    def write(self, values: dict):
         """
         Writes Values of control dict to fmu
-        :param control_dict:
-        :return:
         """
-        if control_dict:
-            for var_name, value in control_dict.items():
-                self._write_value(var_name, value)
-        else:
-            self._write_default_controls()
+
+        for var_name, value in values.items():
+            self._write_value(var_name, value)
 
     def _write_value(self, var_name: str, value):
         """
@@ -292,13 +188,72 @@ class FMU(System):
         """
 
         variable = self.variable_dict[var_name]
-        vr = [variable.valueReference]
+        value_reference = [variable.valueReference]
 
         if variable.type == 'Real':
-            self.fmu.setReal(vr, [float(value)])
+            self.fmu.setReal(value_reference, [float(value)])
         elif variable.type in ['Integer', 'Enumeration']:
-            self.fmu.setInteger(vr, [int(value)])
+            self.fmu.setInteger(value_reference, [int(value)])
         elif variable.type == 'Boolean':
-            self.fmu.setBoolean(vr, [value == 1.0 or value == True or value == "True"])
+            self.fmu.setBoolean(value_reference, [value == 1.0 or value is True or value == "True"])
         else:
             raise Exception("Unsupported type: %s" % variable.type)
+
+    def advance(self):
+
+        """ Simulates one step """
+
+        self.fmu.doStep(
+            currentCommunicationPoint=self.time,
+            communicationStepSize=self.step_size
+        )
+
+        # increment system time
+        self.time += self.step_size
+
+    def setup(self, start_time: int, instance_name: str = 'fmu', simulation_tolerance: float = 0.0001):
+        """
+        Set up the FMU environment for a given start time.
+        :param start_time: Time at which the simulation is started (in s of the year)
+        :param instance_name: Name of the fmu instance
+        :param simulation_tolerance: Simulation tolerance
+        """
+
+        if start_time < 0:
+            raise SimulationError(message='Please make sure the start time is greater or equal to zero.')
+        if self.fmu is not None:
+            raise SimulationError(message='Please make sure the simulation was closed.')
+
+        self.time = start_time
+
+        # create a slave
+        self.fmu = fmpy.fmi2.FMU2Slave(
+            guid=self.description.guid,
+            unzipDirectory=fmpy.extract(self.fmu_path),
+            modelIdentifier=self.description.coSimulation.modelIdentifier,
+            instanceName=instance_name
+        )
+        self.fmu.instantiate()
+        self.fmu.reset()
+        self.fmu.setupExperiment(
+            startTime=start_time,
+            tolerance=simulation_tolerance,
+        )
+        self.fmu.enterInitializationMode()
+        self.fmu.exitInitializationMode()
+
+    def close(self):
+        """ Closes the simulation and clears the fmu object """
+
+        self.fmu.terminate()
+        self.fmu.freeInstance()
+        shutil.rmtree(fmpy.extract(self.fmu_path))
+
+        del self.fmu
+        self.fmu = None
+
+    def summary(self):
+        """ prints the summary of the FMU """
+
+        fmpy.dump(str(self.fmu_path))
+

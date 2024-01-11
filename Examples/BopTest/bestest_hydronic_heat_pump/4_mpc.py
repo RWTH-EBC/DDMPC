@@ -49,10 +49,10 @@ system.setup(
     active_control_layers={"oveHeaPumY_activate": 1},
 )
 
-dh = load_DataHandler("pid_data")
+dh = load_DataContainer("pid_data")
 
-TAirRoom_TrainingData.add(raw_data=load_DataHandler("pid_data"))
-power_hp_TrainingData.add(raw_data=load_DataHandler("pid_data"))
+TAirRoom_TrainingData.add(raw_data=dh)
+power_hp_TrainingData.add(raw_data=dh)
 
 solver_options = {
     "verbose": False,
@@ -71,8 +71,7 @@ for repetition in range(7):
     )
 
     online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
-    dh.add(online_data)
-    mpc_plotter.plot(df=dh.containers[-1].df, show_plot=True, save_plot=False)
+    online_data.plot(plotter=mpc_plotter)
 
     # online learning TAirRoom
     TAirRoom_TrainingData.add(online_data)

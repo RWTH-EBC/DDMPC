@@ -439,6 +439,7 @@ class Subtraction(Constructed):
     def past_steps(self) -> int:
         return 0
 
+
 class Product(Constructed):
 
     def __init__(
@@ -603,13 +604,13 @@ class TimeFunc(Constructed):
 
         row = df.index[idx]
 
-        df.loc[row, self.col_name] = self.func(df.loc[row, 'SimTime'])
+        df.loc[row, self.col_name] = self.func(df.loc[row, 'time'])
 
         return df
 
     def process(self, df: pd.DataFrame) -> pd.DataFrame:
 
-        df[self.col_name] = df['SimTime'].apply(self.func)
+        df[self.col_name] = df['time'].apply(self.func)
 
         return df
 

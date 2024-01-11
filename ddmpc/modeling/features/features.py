@@ -105,7 +105,7 @@ class Controlled(Feature):
 
         row = df.index[idx]
 
-        self.time = int(df.loc[row, 'SimTime'])
+        self.time = int(df.loc[row, 'time'])
         self.value = float(df.loc[row, self.source.col_name])
 
         self.error = float(self.mode.error(value=self.value, time=self.time))
@@ -123,9 +123,9 @@ class Controlled(Feature):
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
 
-        df[self.col_name_lb] = df['SimTime'].apply(lambda t: self.mode.lb(t))
-        df[self.col_name_ub] = df['SimTime'].apply(lambda t: self.mode.ub(t))
-        df[self.col_name_target] = df['SimTime'].apply(lambda t: self.mode.target(t))
+        df[self.col_name_lb] = df['time'].apply(lambda t: self.mode.lb(t))
+        df[self.col_name_ub] = df['time'].apply(lambda t: self.mode.ub(t))
+        df[self.col_name_target] = df['time'].apply(lambda t: self.mode.target(t))
 
         return df
 

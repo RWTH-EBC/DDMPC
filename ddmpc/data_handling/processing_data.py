@@ -486,7 +486,7 @@ class TrainingData:
             return ret_df
 
         def reduce_step_size(data_frame: pd.DataFrame) -> pd.DataFrame:
-            return data_frame[(data_frame['SimTime'] - data_frame['SimTime'].iloc[0]) % self.step_size == 0]
+            return data_frame[(data_frame['time'] - data_frame['time'].iloc[0]) % self.step_size == 0]
 
         assert self.step_size % self.step_size == 0, \
             f'Make sure the step_size of the NetworkTrainer {self.step_size} ist ' \

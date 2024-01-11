@@ -26,7 +26,7 @@ power_hp_wb = WhiteBox(
 )
 
 
-pid_data = load_DataHandler("pid_data")
+pid_data = load_DataContainer("pid_data")
 
 power_hp_TrainingData_wb.add(pid_data)
 power_hp_TrainingData_wb.split(0., 0., 1)
