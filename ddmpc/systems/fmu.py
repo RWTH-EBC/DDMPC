@@ -35,16 +35,16 @@ class FMU(System):
         # initialize parent class
         super().__init__(
             model=model,
-            name=name,
             step_size=step_size,
         )
 
         # fmu instance
+        self.name:          str = name
         self.fmu:           Optional[FMU] = None
         self.directory:     Union[Path, str] = directory
 
         # description and variables
-        self.description:   fmpy.model_description.ModelDescription  = self._get_description()
+        self.description:   fmpy.model_description.ModelDescription = self._get_description()
         self.variable_dict: dict[str] = self._get_variable_dict()
 
         # check variables
@@ -218,7 +218,7 @@ class FMU(System):
             raise AttributeError(f'FMU file with path "{self.fmu_path}" does not exist.')
 
         # read model description
-        model_description = fmpy.read_model_description(self.fmu_path.as_posix())
+        model_description = fmpy.read_model_description(self.fmu_path.as_posix(), validate=False)
 
         # close fmu file
         file.close()
@@ -246,7 +246,7 @@ class FMU(System):
         """ Reads current variable values and returns them as a dict """
 
         res = dict()
-        for var_name in self._readable_columns:
+        for var_name in self.readable:
             res[var_name] = self._read_value(var_name)
 
         # add current time to results

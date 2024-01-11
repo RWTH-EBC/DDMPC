@@ -21,7 +21,6 @@ class BopTest(System):
     ):
 
         super(BopTest, self).__init__(
-            name=name,
             step_size=step_size,
             model=model,
         )
