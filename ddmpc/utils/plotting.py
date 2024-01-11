@@ -201,15 +201,15 @@ class Plotter:
 
         df = df.copy(deep=True).round(4)
 
-        assert 'SimTime' in df.columns
+        assert 'time' in df.columns
 
         if self.title:
             fig.suptitle(self.title)
 
         # timescale
-        step_size = int(df['SimTime'].iloc[1] - df['SimTime'].iloc[0])
-        duration = abs(int(df['SimTime'].iloc[-1] - df['SimTime'].iloc[0]))
-        start_date = datetime.datetime.fromtimestamp(int(df['SimTime'].iloc[0]))
+        step_size = int(df['time'].iloc[1] - df['time'].iloc[0])
+        duration = abs(int(df['time'].iloc[-1] - df['time'].iloc[0]))
+        start_date = datetime.datetime.fromtimestamp(int(df['time'].iloc[0]))
         date_list = [start_date + datetime.timedelta(seconds=step_size) * rows for rows in range(0, len(df.index))]
 
         if current_time is not None:
@@ -374,7 +374,7 @@ class Plotter:
 
         # timescale
         try:
-            step_size = int(real['SimTime'].iloc[1] - real['SimTime'].iloc[0])
+            step_size = int(real['time'].iloc[1] - real['time'].iloc[0])
         except IndexError:
             raise ValueError(f'real only contains {len(real.index)} rows')
 
@@ -395,16 +395,16 @@ class Plotter:
 
             grey = fmt.interpolate_colors(i, [fmt.red, fmt.dark_grey, fmt.light_grey])
 
-            df = df[df['SimTime'] >= calculation_time]
+            df = df[df['time'] >= calculation_time]
 
             if end is not None:
-                df = df[df['SimTime'] <= end.timestamp()]
+                df = df[df['time'] <= end.timestamp()]
 
             df = df.iloc[:len_n]
 
             # offset = datetime.datetime.fromtimestamp(Mode.time_offset)
             try:
-                start_date = datetime.datetime.fromtimestamp(int(df['SimTime'].iloc[0]))
+                start_date = datetime.datetime.fromtimestamp(int(df['time'].iloc[0]))
             except IndexError:
                 print('Empty DataFrame warning!')
                 continue
@@ -485,7 +485,7 @@ class Plotter:
                         """
 
         # iterate over all sub_plots
-        start_date = datetime.datetime.fromtimestamp(int(real['SimTime'].iloc[0]))
+        start_date = datetime.datetime.fromtimestamp(int(real['time'].iloc[0]))
         date_list = [start_date + datetime.timedelta(seconds=step_size) * rows for rows in range(0, len(real.index))]
 
         for ax, sub_plot in zip(axs, self.sub_plots):
@@ -557,7 +557,7 @@ class Plotter:
 
         first_df = list(solutions.values())[0]
         last_df = list(solutions.values())[-1]
-        duration = abs(int(last_df['SimTime'].iloc[-1] - first_df['SimTime'].iloc[0]))
+        duration = abs(int(last_df['time'].iloc[-1] - first_df['time'].iloc[0]))
         self._set_size(duration, fig=fig)
         self._set_locator_and_formatter(duration, axs=axs)
 

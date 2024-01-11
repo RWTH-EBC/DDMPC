@@ -41,7 +41,7 @@ class ModelPredictive(Controller):
         if len(past) <= self.nlp.max_lag:
             return {}, {}
 
-        current_time = past['SimTime'].iloc[-1]
+        current_time = past['time'].iloc[-1]
 
         # get the forecast and past data
         forecast = self._forecast_callback(horizon_in_seconds=int(self.nlp.N*self.step_size))
@@ -68,8 +68,8 @@ class ModelPredictive(Controller):
         if self._solution_plotter is None:
             return
 
-        # add the SimTime column to the DataFrame
-        df['SimTime'] = current_time + df.index * self.step_size
+        # add the time column to the DataFrame
+        df['time'] = current_time + df.index * self.step_size
 
         self._solution_plotter.plot(
             df,
@@ -91,16 +91,16 @@ class ModelPredictive(Controller):
 
             # if k <= 0 use the past DataFrame
             if nlp_var.k <= 0:
-                value = past.loc[past['SimTime'] == t, nlp_var.col_name].values
+                value = past.loc[past['time'] == t, nlp_var.col_name].values
 
                 if len(value) != 1:
                     print(f'Error occurred while getting par var {nlp_var}')
                     print('k =', nlp_var.k)
-                    print('SimTime =', int(t), datetime.datetime.fromtimestamp(t))
+                    print('time =', int(t), datetime.datetime.fromtimestamp(t))
                     print('current_time=', int(current_time), datetime.datetime.fromtimestamp(current_time))
                     print(nlp_var.col_name)
 
-                    past['t'] = past['SimTime'].apply(func=datetime.datetime.fromtimestamp)
+                    past['t'] = past['time'].apply(func=datetime.datetime.fromtimestamp)
                     pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
                     print(past.tail(n=self.nlp.max_lag).to_string())
@@ -114,7 +114,7 @@ class ModelPredictive(Controller):
                     forecast = nlp_var.feature.source.process(forecast)
 
                 try:
-                    value = forecast.loc[forecast['SimTime'] == t, nlp_var.col_name].values
+                    value = forecast.loc[forecast['time'] == t, nlp_var.col_name].values
                     assert len(value) == 1,\
                         f'{nlp_var} with col_name={nlp_var.col_name} at t={t} was not found in: \n {forecast.to_string()}'
 
@@ -144,7 +144,7 @@ class ModelPredictive(Controller):
             solutions = dict()
 
         # add the SimTime column to the DataFrame
-        df['SimTime'] = current_time + df.index * self.step_size
+        df['time'] = current_time + df.index * self.step_size
         solutions[current_time] = df
 
         # save solutions

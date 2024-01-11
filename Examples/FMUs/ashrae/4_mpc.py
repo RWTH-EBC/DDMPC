@@ -13,12 +13,12 @@ Q_flowAhu_predictor: LinearRegression = load_LinearRegression("Q_flowAhu_linreg"
 """ Set the comfort boundaries """
 TAirRoom.mode = Economic(
     day_start=8,  # Time to activate the daytime boundaries
-    day_end=18,  # Time to activate the night time boundaries
+    day_end=18,  # Time to activate the nighttime boundaries
     day_lb=273.15 + 21,
     day_ub=273.15 + 23,
     night_lb=273.15 + 17,
     night_ub=273.15 + 28,
-    weekend=True,  # Considers the night time constraints for weekends if true
+    weekend=True,  # Considers the nighttime constraints for weekends if true
     time_offset=0,  # UNIX Time Offset (relevant for real-life systems)
 )
 
@@ -79,7 +79,6 @@ for repetition in range(5):  # Start online learning loop
     Q_flowAhu_TrainingData.add(dh)
     Q_flowAhu_TrainingData.shuffle()
     Q_flowAhu_TrainingData.split(0.8, 0.0, 0.2)
-    Q_flowAhu_TrainingData.reduce(NystroemReducer(n_components=500))
     Q_flowAhu_predictor.fit(training_data=Q_flowAhu_TrainingData)
     Q_flowAhu_predictor.test(training_data=Q_flowAhu_TrainingData)
 

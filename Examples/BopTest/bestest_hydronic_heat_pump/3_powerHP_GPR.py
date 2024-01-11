@@ -1,9 +1,8 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
-pid_data = load_DataHandler("pid_data_Identification")
+pid_data = load_DataContainer("pid_data")
 
 power_hp_TrainingData.add(pid_data)
-power_hp_TrainingData.reduce(NystroemReducer(500))
 power_hp_TrainingData.shuffle()
 power_hp_TrainingData.split(0.8, 0.0, 0.2)
 

@@ -12,9 +12,6 @@ Q_flowAhu_TrainingData.add(pid_data)
 Q_flowAhu_TrainingData.shuffle()
 Q_flowAhu_TrainingData.split(trainShare=0.8, validShare=0.0, testShare=0.2)
 
-# Use Nyström Reduction to reduce data set to 500 Inducing Points
-Q_flowAhu_TrainingData.reduce(NystroemReducer(n_components=500))
-
 # Train GPR
 gpr = GaussianProcess.find_best_GPR(
     training_data=Q_flowAhu_TrainingData,

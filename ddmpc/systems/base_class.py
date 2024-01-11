@@ -71,17 +71,17 @@ class System(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def do_step(self):
+    def advance(self):
         """ In this method on simulation step is performed and the system time is updated """
         ...
 
     @abc.abstractmethod
-    def read_values(self) -> dict:
+    def read(self) -> dict:
         """ Reads multiple values from System and returns them as dict """
         ...
 
     @abc.abstractmethod
-    def write_values(self, values: dict):
+    def write(self, values: dict):
         """ Write control values to system """
         ...
 
@@ -177,7 +177,7 @@ class System(abc.ABC):
                 self.time_printer.print(self.time)
 
                 # update the data frame with the current values so the controller can access them
-                update(self.read_values())
+                update(self.read())
 
                 self.model.update(df=df, idx=idx, inplace=True)
 
@@ -190,7 +190,7 @@ class System(abc.ABC):
                         controls, additional_columns = controller(df.loc[df.index <= idx])
 
                         # write controls to the system
-                        self.write_values(controls)
+                        self.write(controls)
 
                         # update current row by controls
                         update(controls)
@@ -202,7 +202,7 @@ class System(abc.ABC):
                 self.model.update(df=df, idx=idx, inplace=True)
 
             # advance simulation
-            self.do_step()
+            self.advance()
 
         # ------------------ simulation loop ------------------
 

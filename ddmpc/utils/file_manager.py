@@ -52,6 +52,11 @@ class FileManager(str):
 
         return self._build_path(self.experiment_dir, 'data', folder, mkdir=mkdir)
 
+    @property
+    def fmu_dir(self) -> Path:
+
+        return self._build_path(self.experiment_dir, 'FMUs')
+
     def data_filepath(self, name: str, folder: str = None,  mkdir: bool = False) -> Path:
 
         if not folder:
