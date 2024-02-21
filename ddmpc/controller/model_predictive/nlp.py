@@ -1,8 +1,10 @@
 import time
+import warnings
 from abc import ABC, abstractmethod
 from typing import Optional, Iterator
 from typing import Union
 
+import numpy as np
 import pandas as pd
 from casadi import MX, inf, nlpsol, vertcat
 
@@ -670,6 +672,31 @@ class NLP:
 
                     self._objectives.append(NLPObjective(objective(nlp_value.mx)))
 
+    def _get_coldstart(self):
+
+        cold_start_values: list = list()
+        for opt_var in self._opt_vars:
+
+            if isinstance(opt_var.feature, Control):
+                cold_start_values.append(opt_var.feature.default)
+
+            elif isinstance(opt_var.feature, Controlled):
+
+                lb, ub = opt_var.feature.mode.bounds(0)
+                target = opt_var.feature.mode.target(0)
+
+                if target is not np.NAN:
+                    cold_start_values.append(target)
+                elif lb is not np.NAN and ub is not np.NAN:
+                    cold_start_values.append((lb + ub) / 2)
+                else:
+                    cold_start_values.append(0)
+                    warnings.warn(f'Mode for feature {opt_var.feature.source.name} does not provide lb, ub or target for cold start initialization, using 0 as default.')
+            else:
+                cold_start_values.append(0)
+                warnings.warn(f'Cold start initialization for class {opt_var.feature.source} not implemented yet, using 0 as default.')
+        return np.array(cold_start_values)
+
     def summary(self):
 
         print('------------------------- NLP SUMMARY -------------------------')
@@ -750,6 +777,8 @@ class NLP:
         # warm start if a solution is available
         if self.solution is not None and self.lastSolutionFailed is False:
             nlp_instance['x0'] = self.solution.opt_vals
+        else:
+            nlp_instance['x0'] = self._get_coldstart()
 
 
         # call to the solver
