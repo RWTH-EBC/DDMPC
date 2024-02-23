@@ -9,6 +9,7 @@ A brief explanation of the most important modules of the **ddmpc** package:
 - **modeling**: modules for modeling, feature mapping and data handling. Simulation interface can be accessed via abstract system class
 - **utils**: utilities for formatting, plotting and pickle handling.
 
+
 # Step by step manual:
 
 1. Create new folder for the system to be controlled
