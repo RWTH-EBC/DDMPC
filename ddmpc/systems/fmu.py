@@ -21,6 +21,7 @@ class FMU(System):
             model:      ddmpc.modeling.Model,
             step_size:  int,
             name: str,
+            time_offset: int,
     ):
         """
         initialize FMU System class
@@ -39,6 +40,7 @@ class FMU(System):
         super().__init__(
             model=model,
             step_size=step_size,
+            time_offset=time_offset
         )
 
         self.disturbances: Optional[pd.DataFrame] = None
@@ -149,7 +151,7 @@ class FMU(System):
         """ Reads current variable values and returns them as a dict """
 
         values = {name: self._read(name) for name in self.readable}
-        values['time'] = self.time
+        values['time'] = self.time + self.time_offset
 
         return values
 
@@ -204,7 +206,7 @@ class FMU(System):
         """ Simulates one step """
 
         self.fmu.doStep(
-            currentCommunicationPoint=self.time,
+            currentCommunicationPoint=self.time - self.time_offset,
             communicationStepSize=self.step_size
         )
 
@@ -224,7 +226,7 @@ class FMU(System):
         if self.fmu is not None:
             raise SimulationError(message='Please make sure the simulation was closed.')
 
-        self.time = start_time
+        self.time = start_time + self.time_offset
 
         # create a slave
         self.fmu = fmpy.fmi2.FMU2Slave(
