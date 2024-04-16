@@ -341,7 +341,7 @@ class Rescaling(Layer):
         return layers.Rescaling(offset=self.offset, scale=self.scale)
 
 
-class CasadiNeuralNetwork:
+class CasadiSequential:
     """
     Generic implementations of sequential Keras models in CasADi.
     """
