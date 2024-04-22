@@ -85,8 +85,11 @@ class BopTest(System):
         self.put(url=self.url_step, data={'step': self.step_size})
 
         # initialization
-        init_params = {'start_time': start_time, 'warmup_period': warmup_period}
-        measurements = self.put(url=self.url_initialize, data=init_params)
+        if scenario is None:
+            init_params = {'start_time': start_time, 'warmup_period': warmup_period}
+            measurements = self.put(url=self.url_initialize, data=init_params)
+        else:
+            measurements = self.put(url=self.url_scenario, data=scenario)['time_period']
         self.time = measurements['time']
 
         self.controls.clear()
@@ -104,7 +107,10 @@ class BopTest(System):
     def advance(self):
 
         self.measurements = self.post(url=self.url_advance, data=self.controls)
-        self.time = self.measurements['time']
+        try:
+            self.time = self.measurements['time']
+        except:
+            pass
 
     def close(self):
         pass
@@ -165,3 +171,10 @@ class BopTest(System):
 
         ddmpc.utils.formatting.print_table(rows=rows)
         print()
+
+    def get_kpis(self):
+        """
+        Get KPIs at the end of the Simulation
+        :return:
+        """
+        return requests.get(url=urljoin(self.url, 'kpi')).json()['payload']
