@@ -1,4 +1,5 @@
 """ mpc.py: Model Predictive Controller, Objectives and Constraints"""
+import os
 
 from ddmpc.controller.conventional import Controller
 from ddmpc.controller.model_predictive.nlp import NLP, NLPSolution
@@ -135,18 +136,18 @@ class ModelPredictive(Controller):
             return
 
         filename: str = 'solutions'
-        directory: str = file_manager.data_dir()
+        directory: str = str(file_manager.data_dir())
 
-        # read old solutions
-        try:
-            solutions = read_pkl(filename=filename, directory=directory)
-        except (FileNotFoundError, EOFError):
-            solutions = dict()
+        df['period'] = current_time
+        df['forecast_time'] = df.index * self.step_size
 
-        # add the SimTime column to the DataFrame
-        df['time'] = current_time + df.index * self.step_size
-        solutions[current_time] = df
+        cols = list(df.columns)
+        cols.insert(0, cols.pop(cols.index('forecast_time')))
+        cols.insert(0, cols.pop(cols.index('period')))
+        df = df[cols]
 
-        # save solutions
-        write_pkl(solutions, filename=filename, directory=directory, override=True)
+        if os.path.exists(directory + f'\\{filename}.csv'):
+            df.to_csv(directory + f'\\{filename}.csv', mode='a', index=False, header=False)
+        else:
+            df.to_csv(directory + f'\\{filename}.csv', mode='a', index=False, header=True)
 
