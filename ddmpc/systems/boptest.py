@@ -129,7 +129,9 @@ class BopTest(System):
             raise ReadingError(f'The following variables could not be read: {reading_errors}')
 
         # only return the values for the readable columns
-        return {var_name: self.measurements[var_name] for var_name in ['time'] + self.readable}
+        mea = {var_name: self.measurements[var_name] for var_name in self.readable}
+        mea['time'] = self.time
+        return mea
 
     def write(self, values: dict):
         self.controls.update(values)

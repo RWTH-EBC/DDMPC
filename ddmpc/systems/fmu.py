@@ -151,7 +151,7 @@ class FMU(System):
         """ Reads current variable values and returns them as a dict """
 
         values = {name: self._read(name) for name in self.readable}
-        values['time'] = self.time + self.time_offset
+        values['time'] = self.time
 
         return values
 
