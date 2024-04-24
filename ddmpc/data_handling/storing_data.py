@@ -158,7 +158,7 @@ class DataContainer:
 
     def save(self, filename: str, override: bool = False):
 
-        write_pkl(self, filename, file_manager.data_dir(mkdir=True), override)
+        write_pkl(self, filename, file_manager.experiment_dir(), override)
 
 
 class DataHandler:
@@ -269,7 +269,7 @@ class DataHandler:
 
     def save(self, filename: str, folder: str = None, override: bool = False):
 
-        directory = file_manager.data_dir(folder=folder, mkdir=True)
+        directory = file_manager.experiment_dir(folder=folder, mkdir=True)
 
         write_pkl(self, filename, directory=directory, override=override)
 
@@ -292,9 +292,10 @@ def to_DataHandler(data: Union[DataContainer, DataHandler, list[DataContainer]])
     raise TypeError(f'Please provide a DataContainer, DataHandler or list of DataContainers not {type(data)}')
 
 
-def load_DataContainer(filename: str, folder: str = None) -> DataContainer:
+def load_DataContainer(filename: str, directory: str = None) -> DataContainer:
 
-    directory = file_manager.data_dir(folder=folder, mkdir=False)
+    if directory is None:
+        directory = file_manager.data_dir()
     dc = read_pkl(filename, directory)
 
     assert isinstance(dc, DataContainer), 'Wrong type loaded!'
@@ -302,10 +303,9 @@ def load_DataContainer(filename: str, folder: str = None) -> DataContainer:
     return dc
 
 
-def load_DataHandler(filename: str, folder: str = None) -> DataHandler:
-
-    directory = file_manager.data_dir(folder=folder, mkdir=False)
-
+def load_DataHandler(filename: str, directory: str = None) -> DataHandler:
+    if directory is None:
+        directory = file_manager.data_dir()
     dh = read_pkl(filename, directory)
 
     assert isinstance(dh, DataHandler), 'Wrong type loaded!'

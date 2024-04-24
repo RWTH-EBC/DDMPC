@@ -77,7 +77,7 @@ class ModelPredictive(Controller):
             save_plot=self.save_solution_plot,
             show_plot=self.show_solution_plot,
             current_time=current_time,
-            filepath=file_manager.plot_filepath(name='mpc_solution', sub_folder='solutions', include_time=True)
+            filepath=file_manager.plot_filepath(name='mpc_solution', folder='solutions', include_time=True)
         )
 
     def _get_par_vals(self, past: pd.DataFrame, forecast: pd.DataFrame, current_time: int) -> list[float]:
