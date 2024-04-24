@@ -1,3 +1,4 @@
+import os
 import time
 from pathlib import Path
 from typing import Optional
@@ -12,6 +13,9 @@ class FileManager(str):
 
         self.base: str = base_directory
         self.experiment: str = 'data'
+
+        if os.path.exists(str(Path(self.experiment_dir(), 'solutions.csv'))):
+            os.remove(str(Path(self.experiment_dir(), 'solutions.csv')))
 
     @staticmethod
     def current_time() -> str:
