@@ -407,6 +407,7 @@ class NLP:
             self,
             N:              int,
             model:          Model,
+            control_change_step: int = 1,
             objectives:     list[Objective] = None,
             constraints:    list[Constraint] = None,
     ):
@@ -428,6 +429,8 @@ class NLP:
         self.model:             Model = model
         self.max_lag:           Optional[int] = None
         self.N:                 int = N
+        assert N % control_change_step == 0, "NLP Horizon N must be a multiple of control change step!"
+        self.control_change_step = control_change_step
 
         self.lastSolutionFailed = True
 
@@ -485,7 +488,10 @@ class NLP:
                 self._add_par_var(NLPValue(feature=u, k=k))
 
             for k in range(0, self.N + 1):
-                self._add_opt_var(NLPValue(feature=u, k=k))
+                if k % self.control_change_step == 0:
+                    self._add_opt_var(NLPValue(feature=u, k=k))
+                else:
+                    self._var_map[u.source, k] = self._var_map[u.source, k - (k % self.control_change_step)]
 
         for d in self.model.disturbances:
 
