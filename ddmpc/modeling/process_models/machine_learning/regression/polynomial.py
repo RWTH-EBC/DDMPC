@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Union, Callable, Optional
 
 import casadi as ca
@@ -98,7 +99,7 @@ class LinearRegression(Predictor):
 
 def load_LinearRegression(filename: str, folder: str = None) -> LinearRegression:
 
-    lr = read_pkl(filename, file_manager.predictors_dir(folder=folder))
+    lr = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
 
     assert isinstance(lr, LinearRegression), 'Wrong type loaded!'
 

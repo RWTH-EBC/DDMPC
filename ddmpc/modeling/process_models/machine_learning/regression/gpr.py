@@ -282,6 +282,6 @@ class GaussianProcess(Predictor):
 
 
 def load_GaussianProcess(filename: str, folder: str = None) -> GaussianProcess:
-    gp = read_pkl(filename, file_manager.predictors_dir(folder=folder))
+    gp = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
     assert isinstance(gp, GaussianProcess), "Wrong type loaded!"
     return gp
