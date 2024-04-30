@@ -7,7 +7,7 @@ import ddmpc.systems
 from ddmpc.systems import System
 from ddmpc.systems.exceptions import SimulationError
 from ddmpc.utils.pickle_handler import read_pkl, write_pkl
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 import fmpy.fmi2
 
 
@@ -53,7 +53,7 @@ class FMU(System):
     def fmu_path(self):
         """ Returns the path of the fmu """
 
-        return Path(file_manager.fmu_dir, self.name)
+        return Path(file_manager.fmu_dir(), self.name)
 
     def _get_description(self) -> fmpy.model_description.ModelDescription:
         """
@@ -80,7 +80,7 @@ class FMU(System):
     def disturbances_filepath(self) -> Path:
         """ The filepath where the disturbances are stored """
 
-        return Path(f'{file_manager.fmu_dir}//{self.name}_disturbances_{self.step_size}.pkl')
+        return Path(f'{file_manager.fmu_dir()}//{self.name}_disturbances_{self.step_size}.pkl')
 
     def load_disturbances(self):
         """ Loads the disturbances DataFrame from the disc """

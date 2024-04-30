@@ -9,7 +9,7 @@ from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
 from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.data_handling.reduction import InducingPoints
 from ddmpc.modeling.predicting import Predictor
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import *
 
 

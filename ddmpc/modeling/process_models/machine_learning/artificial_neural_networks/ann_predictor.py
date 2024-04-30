@@ -11,7 +11,7 @@ import ddmpc.utils.logging as logging
 from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.modeling.predicting import Predictor
 from ddmpc.modeling.process_models.machine_learning.artificial_neural_networks.keras_tuner import TunerModel
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import write_pkl, read_pkl
 from .casadi_neural_network import CasadiNeuralNetwork
 

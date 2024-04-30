@@ -1,11 +1,12 @@
 """ data_handling.py: Classes to manage simulated data using Pandas DataFrames """
+from pathlib import Path
 from typing import Union, Optional
 
 import pandas as pd
 
 import ddmpc.utils.formatting as fmt
 from ddmpc.modeling.features.features import Controlled, Feature
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import write_pkl, read_pkl
 from ddmpc.utils.plotting import Plotter
 
@@ -122,7 +123,7 @@ class DataContainer:
             stop_time:  int = None,
             show_plot:  bool = True,
             save_plot:  bool = False,
-            filepath:   str = None,
+            save_name:   str = None,
     ):
         """
         Plots the DataFrame.
@@ -136,7 +137,7 @@ class DataContainer:
         if stop_time is not None:
             df = df[df['SimTime'] <= stop_time]
 
-        plotter.plot(df=df, save_plot=save_plot, show_plot=show_plot, filepath=filepath)
+        plotter.plot(df=df, save_plot=save_plot, show_plot=show_plot, save_name=save_name)
 
     def mse(self, feature: Controlled) -> pd.Series:
         """ returns the mean squared error for a given feature """
@@ -269,7 +270,10 @@ class DataHandler:
 
     def save(self, filename: str, folder: str = None, override: bool = False):
 
-        directory = file_manager.data_dir(folder=folder, mkdir=True)
+        if folder is not None:
+            directory = str(Path(file_manager.experiment_dir(), folder))
+        else:
+            directory = file_manager.experiment_dir()
 
         write_pkl(self, filename, directory=directory, override=override)
 

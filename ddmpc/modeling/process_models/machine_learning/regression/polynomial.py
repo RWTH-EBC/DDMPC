@@ -7,7 +7,7 @@ from sklearn import linear_model
 import ddmpc.utils.formatting as fmt
 from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.modeling.predicting import Predictor
-from ddmpc.utils import file_manager
+from ddmpc.utils import FileManager as file_manager
 from ddmpc.utils.pickle_handler import read_pkl
 
 

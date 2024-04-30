@@ -10,7 +10,7 @@ import numpy as np
 import ddmpc.utils.formatting as fmt
 from ddmpc.modeling.features.features import Feature
 from ddmpc.modeling.features.sources import Source
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import write_pkl
 
 plot_size = 5
