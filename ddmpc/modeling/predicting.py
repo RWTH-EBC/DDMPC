@@ -322,6 +322,9 @@ class Predictor(ABC):
 
     def save(self, filename: str, folder: str = None, override: bool = False):
 
+        if folder is None:
+            folder = ''
+
         directory = str(Path(file_manager.predictors_dir(), folder))
 
         write_pkl(self, filename, directory=directory, override=override)

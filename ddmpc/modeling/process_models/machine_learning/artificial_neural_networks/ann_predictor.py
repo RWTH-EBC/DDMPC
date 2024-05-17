@@ -135,6 +135,9 @@ class NeuralNetwork(Predictor):
 
         assert self.sequential is not None, 'Please make sure to build a sequential before saving.'
 
+        if folder is None:
+            folder = ''
+
         # save the sequential to the disc
         filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name))
         self.sequential.save(filepath)
@@ -143,6 +146,9 @@ class NeuralNetwork(Predictor):
         """
         Loads a sequential keras model from the given filepath.
         """
+
+        if folder is None:
+            folder = ''
 
         filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name))
 
@@ -316,9 +322,12 @@ class NetworkTrainer:
 
             del neural_network.sequential
 
+        if folder is None:
+            folder = ''
+
         filepath = str(Path(file_manager.predictors_dir(), folder))
 
-        write_pkl(self, filename=filename,directory=filepath, override=override)
+        write_pkl(self, filename=filename, directory=filepath, override=override)
 
 
 def load_NetworkTrainer(filename: str) -> NetworkTrainer:
@@ -338,6 +347,9 @@ def load_NetworkTrainer(filename: str) -> NetworkTrainer:
 
 
 def load_NeuralNetwork(filename: str, folder: str = None) -> NeuralNetwork:
+
+    if folder is None:
+        folder = ''
 
     neural_network = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
 

@@ -99,6 +99,9 @@ class LinearRegression(Predictor):
 
 def load_LinearRegression(filename: str, folder: str = None) -> LinearRegression:
 
+    if folder is None:
+        folder = ''
+
     lr = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
 
     assert isinstance(lr, LinearRegression), 'Wrong type loaded!'
