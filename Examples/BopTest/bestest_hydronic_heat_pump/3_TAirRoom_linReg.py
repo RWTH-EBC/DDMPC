@@ -1,6 +1,6 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
-pid_data = load_DataContainer("pid_data")
+pid_data = load_DataHandler("pid_data")
 
 TAirRoom_TrainingData.add(pid_data)
 
