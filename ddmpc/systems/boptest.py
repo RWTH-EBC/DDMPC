@@ -110,7 +110,7 @@ class BopTest(System):
 
         self.measurements = self.post(url=self.url_advance, data=self.controls)
         try:
-        self.time = self.measurements['time'] + self.time_offset
+            self.time = self.measurements['time'] + self.time_offset
         except:
             pass
 

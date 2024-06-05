@@ -98,4 +98,3 @@ df.to_csv(str(Path(FileManager.experiment_dir(), 'data.csv')))
 
 kpis = system.get_kpis()
 kpis.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
-

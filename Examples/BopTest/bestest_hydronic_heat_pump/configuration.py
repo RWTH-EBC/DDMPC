@@ -101,6 +101,7 @@ price_el = Disturbance(
 
 costs_el = Connection(Product(b1=price_el, b2=power_hp, scale=0.001))
 
+
 def logistic(x):
     return 1 / (1 + np.exp(-(x - 0.01) * 500))
 
