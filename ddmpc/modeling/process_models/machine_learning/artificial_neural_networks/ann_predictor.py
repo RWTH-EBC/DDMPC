@@ -282,7 +282,7 @@ class NetworkTrainer:
                 )
 
             try:
-                filepath = f'{file_manager.predictors_dir()}\scores.txt'
+                filepath = f'{file_manager.predictors_dir()}/scores.txt'
                 with open(filepath, 'w') as file:
                     file.write(json.dumps(res))
             except Exception:
