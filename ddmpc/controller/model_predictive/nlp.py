@@ -491,6 +491,7 @@ class NLP:
                 if k % self.control_change_step == 0:
                     self._add_opt_var(NLPValue(feature=u, k=k))
                 else:
+                    u.source.mx[k] = u.source.mx[k - (k % self.control_change_step)]
                     self._var_map[u.source, k] = self._var_map[u.source, k - (k % self.control_change_step)]
 
         for d in self.model.disturbances:
