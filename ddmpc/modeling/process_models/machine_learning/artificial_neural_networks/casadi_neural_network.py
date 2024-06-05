@@ -6,6 +6,7 @@ from typing import Union
 
 from casadi import *
 from keras import models, layers, Sequential
+from tensorflow import TensorShape
 
 
 class Layer(ABC):
@@ -30,8 +31,25 @@ class Layer(ABC):
             self.activation: Function = self.get_activation(layer.get_config()['activation'])
 
         # input / output shape
-        self.input_shape = layer.input.shape[1:]
-        self.output_shape = layer.output.shape[1:]
+        try:
+            if isinstance(layer.input.shape, tuple):
+                self.input_shape = layer.input.shape[1:]
+            elif isinstance(layer.input.shape, TensorShape):
+                self.input_shape = tuple(layer.input.shape[1:].as_list())
+            else:
+                self.input_shape = None
+        except AttributeError:
+            self.input_shape = None
+
+        try:
+            if isinstance(layer.output.shape, tuple):
+                self.output_shape = layer.output.shape[1:]
+            elif isinstance(layer.output.shape, TensorShape):
+                self.output_shape = tuple(layer.output.shape[1:].as_list())
+            else:
+                self.output_shape = None
+        except AttributeError:
+            self.output_shape = None
 
         # update the dimensions to two dimensions
         self.update_dimensions()
@@ -78,14 +96,18 @@ class Layer(ABC):
         CasADi does only work with two dimensional arrays. So the dimensions must be updated.
         """
 
-        if len(self.input_shape) == 1:
+        if self.input_shape is None:
+            pass
+        elif len(self.input_shape) == 1:
             self.input_shape = (1, self.input_shape[0])
         elif len(self.input_shape) == 2:
             self.input_shape = (self.input_shape[0], self.input_shape[1])
         else:
             raise ValueError("Please check input dimensions.")
 
-        if len(self.output_shape) == 1:
+        if self.output_shape is None:
+            pass
+        elif len(self.output_shape) == 1:
             self.output_shape = (1, self.output_shape[0])
         elif len(self.output_shape) == 2:
             self.output_shape = (self.output_shape[0], self.output_shape[1])
@@ -142,8 +164,8 @@ class Dense(Layer):
         self.weights, self.biases = layer.get_weights()
 
         # check input dimension
-        if self.input_shape[1] != self.weights.shape[0]:
-            raise ValueError(f'Please check the input dimensions of this layer. Layer with error: {self.name}')
+        # if self.input_shape[1] != self.weights.shape[0]:
+        #     raise ValueError(f'Please check the input dimensions of this layer. Layer with error: {self.name}')
 
     def forward(self, input):
 
@@ -352,7 +374,12 @@ class CasadiSequential:
             - Dense (Fully connected layer)
             - Flatten (Reduces the input dimension to 1)
             - BatchNormalizing (Normalization)
-            - LSTM (Recurrent Cell)
+            - Normalization
+            - Cropping 1d
+            - Concatenate
+            - Reshape
+            - Add
+            - Rescaling
         :param model: Sequential Keras Model
         """
 
