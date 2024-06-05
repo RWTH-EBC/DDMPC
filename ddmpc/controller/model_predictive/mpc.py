@@ -1,8 +1,10 @@
 """ mpc.py: Model Predictive Controller, Objectives and Constraints"""
+import os
+from pathlib import Path
 
 from ddmpc.controller.conventional import Controller
 from ddmpc.controller.model_predictive.nlp import NLP, NLPSolution
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import read_pkl, write_pkl
 from ddmpc.utils.plotting import *
 
@@ -34,6 +36,9 @@ class ModelPredictive(Controller):
         self.show_solution_plot: bool = show_solution_plot
         self.save_solution_plot: bool = save_solution_plot
         self.save_solution_data: bool = save_solution_data
+
+        if os.path.exists(str(Path(file_manager.experiment_dir(), 'solutions.csv'))):
+            os.remove(str(Path(file_manager.experiment_dir(), 'solutions.csv')))
 
     def __str__(self):
         return f'ModelPredictive()'
@@ -78,7 +83,7 @@ class ModelPredictive(Controller):
             save_plot=self.save_solution_plot,
             show_plot=self.show_solution_plot,
             current_time=current_time,
-            filepath=file_manager.plot_filepath(name='mpc_solution', sub_folder='solutions', include_time=True)
+            save_name=f'solutions\\{file_manager.current_time()}-mpc_solution.svg'
         )
 
     def _get_par_vals(self, past: pd.DataFrame, forecast: pd.DataFrame, current_time: int) -> list[float]:
@@ -137,18 +142,18 @@ class ModelPredictive(Controller):
             return
 
         filename: str = 'solutions'
-        directory: str = file_manager.data_dir()
+        directory: str = file_manager.experiment_dir()
 
-        # read old solutions
-        try:
-            solutions = read_pkl(filename=filename, directory=directory)
-        except (FileNotFoundError, EOFError):
-            solutions = dict()
+        df['period'] = current_time
+        df['forecast_time'] = df.index * self.step_size_model
 
-        # add the SimTime column to the DataFrame
-        df['time'] = current_time + df.index * self.step_size_model
-        solutions[current_time] = df
+        cols = list(df.columns)
+        cols.insert(0, cols.pop(cols.index('forecast_time')))
+        cols.insert(0, cols.pop(cols.index('period')))
+        df = df[cols]
 
-        # save solutions
-        write_pkl(solutions, filename=filename, directory=directory, override=True)
+        if os.path.exists(directory + f'\\{filename}.csv'):
+            df.to_csv(directory + f'\\{filename}.csv', mode='a', index=False, header=False)
+        else:
+            df.to_csv(directory + f'\\{filename}.csv', mode='a', index=False, header=True)
 

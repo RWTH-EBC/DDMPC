@@ -1,6 +1,7 @@
 """ predicting.py: Superclass for the ANN's, GaussianProcess and PhysicsBased. """
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Union, Optional, Iterator, Callable
 
 import casadi as ca
@@ -10,7 +11,7 @@ import numpy as np
 import ddmpc.utils.formatting as fmt
 from ddmpc.modeling.features.features import Feature
 from ddmpc.modeling.features.sources import Source
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import write_pkl
 
 plot_size = 5
@@ -291,7 +292,7 @@ class Predictor(ABC):
 
             if save_plot:
                 name = f'{self.__class__.__name__}'
-                filepath = file_manager.plot_filepath(name=str(self), sub_folder='accuracies', include_time=True)
+                filepath = file_manager.plot_filepath(name=str(self), folder='accuracies', include_time=True)
                 plt.savefig(filepath)
 
             if show_plot:
@@ -321,6 +322,9 @@ class Predictor(ABC):
 
     def save(self, filename: str, folder: str = None, override: bool = False):
 
-        directory = file_manager.predictors_dir(folder=folder, mkdir=True)
+        if folder is None:
+            folder = ''
+
+        directory = str(Path(file_manager.predictors_dir(), folder))
 
         write_pkl(self, filename, directory=directory, override=override)
