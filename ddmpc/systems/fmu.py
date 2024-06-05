@@ -1,7 +1,7 @@
 import pathlib
 import shutil
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional
 import pandas as pd
 import ddmpc.systems
 from ddmpc.systems import System
@@ -21,6 +21,7 @@ class FMU(System):
             model:      ddmpc.modeling.Model,
             step_size:  int,
             name: str,
+            **kwargs,
     ):
         """
         initialize FMU System class
@@ -47,7 +48,7 @@ class FMU(System):
             self.load_disturbances()
 
         except FileNotFoundError:
-            self.simulate_disturbances()
+            self.simulate_disturbances(**kwargs)
 
     @property
     def fmu_path(self):
@@ -122,6 +123,8 @@ class FMU(System):
 
             # save to df
             self.disturbances = df
+
+        self.close()
 
     def _get_forecast(self, length: int) -> pd.DataFrame:
         """ Returns forecast for the current prediction horizon """

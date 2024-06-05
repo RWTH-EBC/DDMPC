@@ -14,7 +14,7 @@ class TimePrinter:
             self,
             time_offset:    int = 1640995200,
             display_time:   bool = True,
-            time_format:    str = '%m.%d.%Y - %H:%M',
+            time_format:    str = '%d.%m.%Y - %H:%M',
             interval:       int = 60 * 60 * 4,
 
     ):
