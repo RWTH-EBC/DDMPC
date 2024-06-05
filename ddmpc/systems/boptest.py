@@ -153,6 +153,8 @@ class BopTest(System):
         response = self.put(self.url_forecast, data=data)
         forecast = pd.DataFrame(response)
 
+        forecast['time'] = forecast['time'] + self.time_offset
+
         return forecast
 
     def summary(self):
