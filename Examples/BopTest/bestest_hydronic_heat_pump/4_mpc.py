@@ -1,7 +1,7 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 mpc_name = 'test'
-scenario = 'typical_heat_day'
+scenario = 'peak_heat_day'
 
 # regression for TAirRoom
 # TAirRoom_pred: LinearRegression = load_LinearRegression(filename='TairRoom_linReg')
@@ -70,7 +70,7 @@ for repetition in range(14):
     )
 
     online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
-    online_data.plot(plotter=mpc_solution_plotter, save_plot=True, save_name=f'reference_{repetition}.png')
+    online_data.plot(plotter=mpc_solution_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
     # # online learning TAirRoom
     # TAirRoom_TrainingData.add(online_data)
@@ -97,4 +97,5 @@ for repetition in range(14):
 df.to_csv(str(Path(FileManager.experiment_dir(), 'data.csv')))
 
 kpis = system.get_kpis()
+kpis = pd.DataFrame(data=kpis, index=[0])
 kpis.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
