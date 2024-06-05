@@ -72,6 +72,9 @@ class ModelPredictive(Controller):
 
     def _plot_solution(self, df: pd.DataFrame, current_time: int):
 
+        if not self.save_solution_plot and not self.show_solution_plot:
+            return
+
         if self._solution_plotter is None:
             return
 

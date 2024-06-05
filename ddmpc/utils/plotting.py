@@ -88,7 +88,10 @@ class SubPlot:
     def convert(self, values: pd.Series):
 
         if self.normalize:
-            values = (values - values.min()) / (values.max() - values.min())
+            if values.max() == values.min():
+                values[:] = 1
+            else:
+                values = (values - values.min()) / (values.max() - values.min())
 
         values = values * self.factor - self.shift
 
@@ -162,6 +165,8 @@ class Plotter:
     ):
 
         # build plot
+        if not save_plot and not show_plot:
+            return
         self._build(df, current_time)
 
         # save plot
