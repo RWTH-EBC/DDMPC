@@ -1,4 +1,8 @@
-from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+try:
+    from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+except ImportError:
+    print("Examples module does not exist. Importing configuration directly from current folder.")
+    from configuration import *
 from keras.callbacks import EarlyStopping
 
 pid_data = load_DataHandler("pid_data")

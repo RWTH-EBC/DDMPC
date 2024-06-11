@@ -1,4 +1,9 @@
-from Examples.FMUs.ashrae.config import *
+try:
+    from Examples.FMUs.ashrae.config import *
+except ImportError:
+    print("Examples module does not exist. Importing configuration directly from current folder.")
+    from config import *
+
 
 """ Choose the process models """
 # TAirRoom_predictor = load_NeuralNetwork("TAirRoom_ann")
@@ -9,6 +14,9 @@ from Examples.FMUs.ashrae.config import *
 
 TAirRoom_predictor: LinearRegression = load_LinearRegression("TAirRoom_linreg")
 Q_flowAhu_predictor: LinearRegression = load_LinearRegression("Q_flowAhu_linreg")
+
+TAirRoom_predictor_SS = StateSpace(state_space=lr2ss(linear_regression = TAirRoom_predictor, model=model) , linear_regression = TAirRoom_predictor)
+Q_flowAhu_predictor_SS = StateSpace(state_space=lr2ss(linear_regression = Q_flowAhu_predictor, model=model) , linear_regression = Q_flowAhu_predictor)
 
 """ Set the comfort boundaries """
 TAirRoom.mode = Economic(
@@ -21,7 +29,6 @@ TAirRoom.mode = Economic(
     weekend=True,  # Considers the nighttime constraints for weekends if true
     time_offset=0,  # UNIX Time Offset (relevant for real-life systems)
 )
-
 """ Initialize Model Predictive Controller """
 ThermalZone_MPC = ModelPredictive(
     step_size=one_minute * 15,
@@ -29,6 +36,7 @@ ThermalZone_MPC = ModelPredictive(
         model=model,
         N=32,
         objectives=[
+            #Here we need to differentiate between x, u, d and y. We need to define the state space model
             Objective(feature=TAirRoom, cost=Quadratic(weight=100)),
             Objective(feature=Q_flowTabs, cost=AbsoluteLinear(0.5)),
             Objective(feature=Q_flowAhu, cost=AbsoluteLinear(1)),
@@ -55,6 +63,7 @@ for repetition in range(5):  # Start online learning loop
     ThermalZone_MPC.nlp.build(  # build nlp with (re-) trained models
         solver_options={"verbose": False, "ipopt.print_level": 0,'expand':True},
         predictors=[TAirRoom_predictor, Q_flowAhu_predictor],
+        # predictors=[TAirRoom_predictor_SS, TAirRoom_predictor_SS],
     )
 
     online_data = system.run(  # run system with MPC for desired time

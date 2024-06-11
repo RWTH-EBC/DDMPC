@@ -1,6 +1,19 @@
-from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+try:
+    from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+except ImportError:
+    print("Examples module does not exist. Importing configuration directly from current folder.")
+    from configuration import *
 
-pid_data = load_DataHandler("pid_data")
+try:
+    pid_data = load_DataHandler("pid_data")
+except FileNotFoundError:
+    import os
+    current_dir = os.getcwd()
+    # Traverse up the directory tree by the specified number of levels
+    for _ in range(3):
+        current_dir = os.path.dirname(current_dir)
+    pid_data = load_DataHandler("pid_data",folder=os.path.join(current_dir, r"stored_data/data"))
+
 
 TAirRoom_TrainingData.add(pid_data)
 
