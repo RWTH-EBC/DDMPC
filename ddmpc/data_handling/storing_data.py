@@ -297,7 +297,7 @@ def load_DataContainer(filename: str, folder: str = None) -> DataContainer:
     directory = file_manager.data_dir(folder=folder, mkdir=False)
     dc = read_pkl(filename, directory)
 
-    assert isinstance(dc, DataContainer), 'Wrong type loaded!'
+    assert isinstance(dc, DataHandler), 'Wrong type loaded!'
 
     return dc
 
