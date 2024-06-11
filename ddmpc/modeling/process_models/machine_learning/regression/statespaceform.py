@@ -29,9 +29,8 @@ class StateSpace(Predictor):
             input_values = np.array(input_values)
         elif not isinstance(input_values, list):
             raise ValueError("input_values has to be either a list, np.ndarray")
-        print(f"input_values: {np.multiply(input_values,np.zeros((1,17)))}")
         x, u, d = LRinputs2SSvectors(input_values, self.state_space, self.linear_regression)
         x = self.state_space.A @ x + self.state_space.B @ u + self.state_space.E @ d
-        y = self.state_space.C @ x + self.state_space.D @ u
+        y = self.state_space.C @ x + self.state_space.D @ u + self.state_space.y_offset
         return y
 

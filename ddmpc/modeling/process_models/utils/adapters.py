@@ -25,6 +25,7 @@ class StateSpace_ABCDE:
         self.C = np.zeros((0,0))
         self.D = np.zeros((0,0))
         self.E = np.zeros((0,0))
+        self.y_offset = 0
         self.SS_x = list() # list of states (Input objects)
         self.SS_d = list() # list of disturbances (Input objects)
         self.SS_u = list() # list of inputs (Input objects)
@@ -45,6 +46,9 @@ class StateSpace_ABCDE:
 
     def set_E(self, E: np.matrix):
         self.E = E
+
+    def set_y_offset(self, y_offset: float):
+        self.y_offset = y_offset
 
     def add_x(self, input : Input):
         self.SS_x.append(input)
@@ -84,13 +88,11 @@ def lr2ss(linear_regression: LinearRegression, model: Model) -> StateSpace_ABCDE
     # ny = len(model.controlled)
     
     # for linear_regression in linear_regressions:
-    print(linear_regression.inputs)
     # DE MOMENTO LO HAGO SOLO PARA 1 TRAINING DATA, HAY QUE ACTUALIZAR.
     ny = 1
     nx = sum(x.lag for x in linear_regression.inputs if x.source in model.controlled)
     nu = sum(x.lag for x in linear_regression.inputs if x.source in model.controls)
     nd = sum(x.lag for x in linear_regression.inputs) - nx - nu
-    print(nx, nu, nd)
     A = np.eye((nx))
     B = np.zeros((nx, nu))
     C = np.zeros((ny, nx))
@@ -101,6 +103,7 @@ def lr2ss(linear_regression: LinearRegression, model: Model) -> StateSpace_ABCDE
     A_i = 0
     B_i = 0
     E_i = 0
+    SS_output.set_y_offset(linear_regression.linear_model.intercept_)
     SS_output.add_y(linear_regression.output)
     for f in linear_regression.inputs:
         if f.source in model.controlled:
@@ -153,41 +156,29 @@ def LRinputs2SSvectors(input_values: Union[list, ca.MX, ca.DM, np.ndarray], stat
         u = list()
         d = list()
 
-        total_i = 0 # index to point input_values considering lag
-        x_i = 0 # index to point x
         # Could be more efficient if we iterate over the inputs of the linear regression model and the 
         # compare with the state space model, but this way is ensured that the order of the state space
         # vectors are correct in comparison with the matrices.
         # In addition, we are assuming the order of linear regression inputs is the same as the inputs values
         # something like this could be done to compare the names of the variables and get the correct order of the inputs values:
-
-        # vars = [ca.MX.sym('temperature[' + str(i) + ']') for i in range(2)] + [ca.MX.sym('talve[' + str(i) + ']') for i in range(1)]
-        # var_name_to_compare = 'temperature'
-        # for var in vars:
-        #     # Obtén el nombre de la variable
-        #     var_name = var.name()
-        #     if var_name.startswith(var_name_to_compare):
-        #         print(f'{var_name} starts with {var_name_to_compare}')
-        #     else:
-        #         print(f'{var_name} doesn't start with {var_name_to_compare}')
         for f in state_space.SS_x:
-            for f_aux in linear_regression.inputs:
+            for i,f_aux in enumerate(linear_regression.inputs):
                 if f.source == f_aux.source:
-                    for _ in range(0, f.lag):
-                        x.append(input_values[total_i])
-                        total_i += 1
+                    real_i = sum([input.lag for input in linear_regression.inputs[0:i]])
+                    for j in range(0, f.lag):
+                        x.append(input_values[real_i+j])
         for f in state_space.SS_u:
-            for f_aux in linear_regression.inputs:
+            for i,f_aux in enumerate(linear_regression.inputs):
                 if f.source == f_aux.source:
-                    for _ in range(0, f.lag):
-                        u.append(input_values[total_i])
-                        total_i += 1
+                    real_i = sum([input.lag for input in linear_regression.inputs[0:i]])
+                    for j in range(0, f.lag):
+                        u.append(input_values[real_i+j])
         for f in state_space.SS_d:
-            for f_aux in linear_regression.inputs:
+            for i,f_aux in enumerate(linear_regression.inputs):
                 if f.source == f_aux.source:
-                    for _ in range(0, f.lag):
-                        d.append(input_values[total_i])
-                        total_i += 1
+                    real_i = sum([input.lag for input in linear_regression.inputs[0:i]])
+                    for j in range(0, f.lag):
+                        d.append(input_values[real_i+j])
 
     elif isinstance(input_values, np.ndarray):
 
@@ -196,34 +187,34 @@ def LRinputs2SSvectors(input_values: Union[list, ca.MX, ca.DM, np.ndarray], stat
         d = np.zeros((nd, 1))
 
 
-        total_i = 0 # index to point input_values considering lag
-        x_i = 0 # index to point x
         # Could be more efficient if we iterate over the inputs of the linear regression model and the 
         # compare with the state space model, but this way is ensured that the order of the state space
         # vectors are correct in comparison with the matrices.
+        x_i = 0 # index to point x
         for f in state_space.SS_x:
-            for f_aux in linear_regression.inputs:
+            for i,f_aux in enumerate(linear_regression.inputs):
                 if f.source == f_aux.source:
-                    for _ in range(0, f.lag):
-                        x[x_i] = input_values[total_i]
+                    real_i = sum([input.lag for input in linear_regression.inputs[0:i]])
+                    for j in range(0, f.lag):
+                        x[x_i] = input_values[real_i+j]
                         x_i += 1
-                        total_i += 1
         u_i = 0 # index to point u
         for f in state_space.SS_u:
-            for f_aux in linear_regression.inputs:
+            for i,f_aux in enumerate(linear_regression.inputs):
                 if f.source == f_aux.source:
-                    for _ in range(0, f.lag):
-                        u[u_i] = input_values[total_i]
+                    real_i = sum([input.lag for input in linear_regression.inputs[0:i]])
+                    for j in range(0, f.lag):
+                        u[u_i] = input_values[real_i+j]
                         u_i += 1
-                        total_i += 1
         d_i = 0 # index to point d
         for f in state_space.SS_d:
-            for f_aux in linear_regression.inputs:
+            for i,f_aux in enumerate(linear_regression.inputs):
                 if f.source == f_aux.source:
-                    for _ in range(0, f.lag):
-                        d[d_i] = input_values[total_i]
+                    real_i = sum([input.lag for input in linear_regression.inputs[0:i]])
+                    for j in range(0, f.lag):
+                        d[d_i] = input_values[real_i+j]
                         d_i += 1
-                        total_i += 1
+
     else:
         raise ValueError("input_values has to be either a list, np.ndarray or ca.MX")
 

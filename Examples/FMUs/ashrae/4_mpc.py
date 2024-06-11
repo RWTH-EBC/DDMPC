@@ -62,8 +62,8 @@ dh = load_DataHandler("pid_data")
 for repetition in range(5):  # Start online learning loop
     ThermalZone_MPC.nlp.build(  # build nlp with (re-) trained models
         solver_options={"verbose": False, "ipopt.print_level": 0,'expand':True},
-        predictors=[TAirRoom_predictor, Q_flowAhu_predictor],
-        # predictors=[TAirRoom_predictor_SS, TAirRoom_predictor_SS],
+        # predictors=[TAirRoom_predictor, Q_flowAhu_predictor],
+        predictors=[TAirRoom_predictor_SS, Q_flowAhu_predictor_SS],
     )
 
     online_data = system.run(  # run system with MPC for desired time
@@ -90,5 +90,9 @@ for repetition in range(5):  # Start online learning loop
     Q_flowAhu_TrainingData.split(0.8, 0.0, 0.2)
     Q_flowAhu_predictor.fit(training_data=Q_flowAhu_TrainingData)
     Q_flowAhu_predictor.test(training_data=Q_flowAhu_TrainingData)
+
+    TAirRoom_predictor_SS = StateSpace(state_space=lr2ss(linear_regression = TAirRoom_predictor, model=model) , linear_regression = TAirRoom_predictor)
+    Q_flowAhu_predictor_SS = StateSpace(state_space=lr2ss(linear_regression = Q_flowAhu_predictor, model=model) , linear_regression = Q_flowAhu_predictor)
+
 
 dh.save("mpc_data", override=True) # save results
