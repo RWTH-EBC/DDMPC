@@ -9,6 +9,7 @@ from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.modeling.predicting import Predictor
 from ddmpc.utils import file_manager
 from ddmpc.utils.pickle_handler import read_pkl
+from ddmpc.modeling.modeling import Model
 
 
 class LinearRegression(Predictor):
@@ -52,13 +53,13 @@ class LinearRegression(Predictor):
     def predict(self, input_values: Union[list, ca.MX, ca.DM, np.ndarray]) -> Union[ca.MX, ca.DM, np.ndarray]:
 
         if isinstance(input_values, list):
-
+            print("list")
             s = [v * c for v, c in zip(input_values, self.linear_model.coef_[0])]
 
             return self.linear_model.intercept_ + ca.sum1(ca.vertcat(*s))
 
         elif isinstance(input_values, np.ndarray):
-
+            print("np.ndarray")
             if input_values.ndim == 1:
                 return self.linear_model.intercept_ + np.sum(input_values * self.linear_model.coef_)
 

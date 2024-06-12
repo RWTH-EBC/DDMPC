@@ -1,4 +1,8 @@
-from Examples.FMUs.ashrae.config import *
+try:
+    from Examples.FMUs.ashrae.config import *
+except ImportError:
+    print("Examples module does not exist. Importing configuration directly from current folder.")
+    from config import *
 from ddmpc.data_handling.reduction import NystroemReducer
 
 """

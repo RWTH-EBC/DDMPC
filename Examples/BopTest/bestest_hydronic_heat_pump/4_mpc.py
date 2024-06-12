@@ -1,4 +1,8 @@
-from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+try:
+    from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+except ImportError:
+    print("Examples module does not exist. Importing configuration directly from current folder.")
+    from configuration import *
 
 # regression for TAirRoom
 # TAirRoom_pred: LinearRegression = load_LinearRegression(filename='TairRoom_linReg')
@@ -49,7 +53,7 @@ system.setup(
     active_control_layers={"oveHeaPumY_activate": 1},
 )
 
-dh = load_DataContainer("pid_data")
+dh = load_DataHandler("pid_data")
 
 TAirRoom_TrainingData.add(raw_data=dh)
 power_hp_TrainingData.add(raw_data=dh)
