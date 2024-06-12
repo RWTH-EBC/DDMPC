@@ -53,13 +53,13 @@ class LinearRegression(Predictor):
     def predict(self, input_values: Union[list, ca.MX, ca.DM, np.ndarray]) -> Union[ca.MX, ca.DM, np.ndarray]:
 
         if isinstance(input_values, list):
-
+            print("list")
             s = [v * c for v, c in zip(input_values, self.linear_model.coef_[0])]
 
             return self.linear_model.intercept_ + ca.sum1(ca.vertcat(*s))
 
         elif isinstance(input_values, np.ndarray):
-
+            print("np.ndarray")
             if input_values.ndim == 1:
                 return self.linear_model.intercept_ + np.sum(input_values * self.linear_model.coef_)
 

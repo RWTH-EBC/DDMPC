@@ -149,8 +149,8 @@ def LRinputs2SSvectors(input_values: Union[list, ca.MX, ca.DM, np.ndarray], stat
     if not isinstance(input_values, np.ndarray) and not isinstance(input_values, list):
         input_values = [input_values]
 
-    # if isinstance(input_values, list):
-    if True:
+    if isinstance(input_values, list):
+    # if True:
 
         x = list()
         u = list()
@@ -181,7 +181,6 @@ def LRinputs2SSvectors(input_values: Union[list, ca.MX, ca.DM, np.ndarray], stat
                         d.append(input_values[real_i+j])
 
     elif isinstance(input_values, np.ndarray):
-
         x = np.zeros((nx, 1))
         u = np.zeros((nu, 1))
         d = np.zeros((nd, 1))
