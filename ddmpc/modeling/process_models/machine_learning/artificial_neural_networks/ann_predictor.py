@@ -13,7 +13,7 @@ from ddmpc.modeling.predicting import Predictor
 from ddmpc.modeling.process_models.machine_learning.artificial_neural_networks.keras_tuner import TunerModel
 from ddmpc.utils.file_manager import file_manager
 from ddmpc.utils.pickle_handler import write_pkl, read_pkl
-from .casadi_neural_network import CasadiNeuralNetwork
+from .casadi_neural_network import CasadiSequential
 
 
 class NeuralNetwork(Predictor):
@@ -38,12 +38,12 @@ class NeuralNetwork(Predictor):
         return f'NeuralNetwork({self.name})'
 
     @property
-    def casadi_ann(self) -> CasadiNeuralNetwork:
+    def casadi_ann(self) -> CasadiSequential:
         """ returns the casadi neural network """
 
         assert self.sequential.built, 'Please build the Sequential Keras model before trying to update the casadi ann.'
 
-        return CasadiNeuralNetwork(model=self.sequential)
+        return CasadiSequential(model=self.sequential)
 
     def predict(self, input_values: Union[list, ca.MX, ca.DM, np.ndarray]) -> Union[list, ca.MX, ca.DM, np.ndarray]:
         """ calculates the prediction to a given input """
@@ -221,7 +221,7 @@ class NetworkTrainer:
             show_plot: bool = False,
             print_result: bool = False,
             save_result: bool = False,
-    ) -> dict[CasadiNeuralNetwork, tuple[float, float, float, float]]:
+    ) -> dict[CasadiSequential, tuple[float, float, float, float]]:
         """ evaluates all sequential Keras models that are stored in neural_networks """
 
         scores = dict()
