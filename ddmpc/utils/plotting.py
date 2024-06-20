@@ -402,7 +402,6 @@ class Plotter:
 
             df = df.iloc[:len_n]
 
-            # offset = datetime.datetime.fromtimestamp(Mode.time_offset)
             try:
                 start_date = datetime.datetime.fromtimestamp(int(df['time'].iloc[0]))
             except IndexError:

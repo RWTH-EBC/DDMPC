@@ -13,27 +13,16 @@ import numpy as np
 
 class Mode(abc.ABC):
 
-    # timestamp of offset (Unix Time / seconds from 1.1.1970)
-    # (Starting day of Simulation)
-    # Monday: 1.1.2018-> 1514764800
-    # Tuesday: 1.1.2019-> 1546300800
-    # Wednesday: 1.1.2022 -> 1640995200
-    # Thursday: 1.1.2015 -> 1420066800
-    # Friday:  1.1.2021 -> 1609459200
-    # Saturday: 1.1.2011 -> 1293840000
-    # Sunday: 1.1.2017 -> 1483228800
 
     def __init__(
             self,
             day_start:      int = 8,
             day_end:        int = 16,
-            time_offset:    int = 0
     ):
 
         self.day_start: int = day_start
         self.day_end:   int = day_end
 
-        self.time_offset: int = time_offset
 
     def __str__(self):
         return f'Mode({self.__class__.__name__})'
@@ -65,14 +54,14 @@ class Mode(abc.ABC):
     def _day(self, time: int) -> bool:
         """ returns True if the given time is during day """
 
-        time = datetime.datetime.fromtimestamp(self.time_offset + time)
+        time = datetime.datetime.fromtimestamp(time)
 
         return self.day_start <= time.hour < self.day_end
 
     def _weekend(self, time: int) -> bool:
         """ returns True if the given time is during weekend """
 
-        time = datetime.datetime.fromtimestamp(self.time_offset + time)
+        time = datetime.datetime.fromtimestamp(time)
 
         return 5 <= time.weekday()
 
@@ -86,10 +75,9 @@ class Steady(Mode):
             day_end:        int = 16,
             day_target:     float = 273.15 + 20,
             night_target:   float = 273.15 + 18,
-            time_offset:    int = 0,
     ):
 
-        super(Steady, self).__init__(day_start=day_start, day_end=day_end, time_offset=time_offset)
+        super(Steady, self).__init__(day_start=day_start, day_end=day_end)
 
         self.day_target = day_target
         self.night_target = night_target
@@ -128,10 +116,9 @@ class Random(Mode):
             day_ub:         float = 273.15 + 21,
             night_ub:       float = 273.15 + 24,
             interval:       int = 60 * 60 * 4,
-            time_offset:    int = 0,
     ):
 
-        super(Random, self).__init__(day_start=day_start, day_end=day_end, time_offset=time_offset)
+        super(Random, self).__init__(day_start=day_start, day_end=day_end)
 
         self.day_lb:    float = day_lb
         self.night_lb:  float = night_lb
@@ -199,7 +186,6 @@ class Identification(Mode):
             night_lb:       float = 273.15 + 16,
             day_ub:         float = 273.15 + 21,
             night_ub:       float = 273.15 + 24,
-            time_offset:    int = 0,
 
             min_interval:   int = 60 * 60 * 2,
             max_interval:   int = 60 * 60 * 5,
@@ -207,7 +193,7 @@ class Identification(Mode):
             max_change:     int = 2,
     ):
 
-        super(Identification, self).__init__(day_start=day_start, day_end=day_end, time_offset=time_offset)
+        super(Identification, self).__init__(day_start=day_start, day_end=day_end)
 
         self.day_lb:    float = day_lb
         self.night_lb:  float = night_lb
@@ -298,10 +284,9 @@ class Economic(Mode):
             night_lb:   float = 273.15 + 16,
             night_ub:   float = 273.15 + 25,
             weekend:    bool = True,
-            time_offset: int = 0,
     ):
 
-        super(Economic, self).__init__(day_start=day_start, day_end=day_end, time_offset=time_offset)
+        super(Economic, self).__init__(day_start=day_start, day_end=day_end)
 
         self.day_lb:    float = day_lb
         self.night_lb:  float = night_lb

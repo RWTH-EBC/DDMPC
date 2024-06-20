@@ -12,13 +12,11 @@ class TimePrinter:
 
     def __init__(
             self,
-            time_offset:    int = 1640995200,
             display_time:   bool = True,
             time_format:    str = '%m.%d.%Y - %H:%M',
             interval:       int = 60 * 60 * 4,
 
     ):
-        self.time_offset: int = time_offset
         self.display_time: int = display_time
         self.time_format: str = time_format
         self.interval: int = interval
@@ -32,7 +30,7 @@ class TimePrinter:
         if not time % self.interval == 0:
             return
 
-        time = datetime.datetime.fromtimestamp(time + self.time_offset)
+        time = datetime.datetime.fromtimestamp(time)
 
         print(time.strftime(self.time_format))
 
@@ -43,6 +41,7 @@ class System(abc.ABC):
             self,
             model: ddmpc.modeling.Model,
             step_size: Union[int],
+            time_offset: int,
     ):
         """
         Initialize System, e.g. load relevant information
@@ -58,6 +57,8 @@ class System(abc.ABC):
         self.readable: list[str] = [readable.col_name for readable in self.model.readable]
 
         self.previous_df: Optional[pd.DataFrame] = pd.DataFrame(dtype=float)
+
+        self.time_offset = time_offset
 
     def __str__(self):
         return f'{self.__class__.__name__}(step_size={self.step_size}s)'
