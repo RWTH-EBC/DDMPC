@@ -9,7 +9,7 @@ from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
 from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.data_handling.reduction import InducingPoints
 from ddmpc.modeling.predicting import Predictor
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import *
 
 
@@ -282,6 +282,8 @@ class GaussianProcess(Predictor):
 
 
 def load_GaussianProcess(filename: str, folder: str = None) -> GaussianProcess:
-    gp = read_pkl(filename, file_manager.predictors_dir(folder=folder))
+    if folder is None:
+        folder = ''
+    gp = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
     assert isinstance(gp, GaussianProcess), "Wrong type loaded!"
     return gp
