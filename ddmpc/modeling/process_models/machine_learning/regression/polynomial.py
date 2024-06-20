@@ -54,7 +54,7 @@ class LinearRegression(Predictor):
 
         if isinstance(input_values, list):
 
-            s = [v * c for v, c in zip(input_values, self.linear_model.coef_)]
+            s = [v * c for v, c in zip(input_values, self.linear_model.coef_[0])]
 
             return self.linear_model.intercept_ + ca.sum1(ca.vertcat(*s))
 
