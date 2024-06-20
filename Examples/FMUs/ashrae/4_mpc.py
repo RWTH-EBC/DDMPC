@@ -40,6 +40,8 @@ ThermalZone_MPC = ModelPredictive(
         ],
     ),
     forecast_callback=system.get_forecast,
+    show_solution_plot=True,
+    solution_plotter=mpc_plotter,
 )
 
 system.setup(start_time=0)

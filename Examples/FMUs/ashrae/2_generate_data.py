@@ -11,7 +11,7 @@ TAirRoom.mode = Random(  # Set the Air temperature mode to random for identifica
     night_lb=273.15 + 16,
     day_ub=273.15 + 21,
     night_ub=273.15 + 24,
-    interval=60 * 60 * 4   # change set point after interval
+    interval=60 * 60 * 4,   # change set point after interval
 )
 
 
