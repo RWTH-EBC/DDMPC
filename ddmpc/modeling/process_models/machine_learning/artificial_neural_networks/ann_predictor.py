@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Optional
 from typing import Union, Callable
 
@@ -11,7 +12,7 @@ import ddmpc.utils.logging as logging
 from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.modeling.predicting import Predictor
 from ddmpc.modeling.process_models.machine_learning.artificial_neural_networks.keras_tuner import TunerModel
-from ddmpc.utils.file_manager import file_manager
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.utils.pickle_handler import write_pkl, read_pkl
 from .casadi_neural_network import CasadiSequential
 
@@ -134,8 +135,11 @@ class NeuralNetwork(Predictor):
 
         assert self.sequential is not None, 'Please make sure to build a sequential before saving.'
 
+        if folder is None:
+            folder = ''
+
         # save the sequential to the disc
-        filepath = file_manager.keras_model_filepath(folder=folder, name=self.name)
+        filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name))
         self.sequential.save(filepath)
 
     def load_sequential(self, folder: str = None):
@@ -143,7 +147,10 @@ class NeuralNetwork(Predictor):
         Loads a sequential keras model from the given filepath.
         """
 
-        filepath = file_manager.keras_model_filepath(folder=folder, name=self.name)
+        if folder is None:
+            folder = ''
+
+        filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name))
 
         # load Sequential from the disc
         self.sequential = models.load_model(filepath=filepath)
@@ -159,7 +166,7 @@ class NeuralNetwork(Predictor):
         del self.sequential
 
         # now pickle the NeuralNetwork object to the disc
-        write_pkl(self, filename, file_manager.predictors_dir(folder=folder), override)
+        write_pkl(self, filename, str(Path(file_manager.predictors_dir())), override)
 
         self.load_sequential(folder)
 
@@ -275,7 +282,7 @@ class NetworkTrainer:
                 )
 
             try:
-                filepath = f'{file_manager.predictors_dir(mkdir=True)}\scores.txt'
+                filepath = f'{file_manager.predictors_dir()}\scores.txt'
                 with open(filepath, 'w') as file:
                     file.write(json.dumps(res))
             except Exception:
@@ -315,9 +322,12 @@ class NetworkTrainer:
 
             del neural_network.sequential
 
-        filepath = file_manager.predictors_dir(folder=folder,mkdir=True)
+        if folder is None:
+            folder = ''
 
-        write_pkl(self, filename=filename,directory=filepath, override=override)
+        filepath = str(Path(file_manager.predictors_dir(), folder))
+
+        write_pkl(self, filename=filename, directory=filepath, override=override)
 
 
 def load_NetworkTrainer(filename: str) -> NetworkTrainer:
@@ -338,10 +348,13 @@ def load_NetworkTrainer(filename: str) -> NetworkTrainer:
 
 def load_NeuralNetwork(filename: str, folder: str = None) -> NeuralNetwork:
 
-    neural_network = read_pkl(filename, file_manager.predictors_dir(folder=folder))
+    if folder is None:
+        folder = ''
+
+    neural_network = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
 
     assert isinstance(neural_network, NeuralNetwork),\
-        f'Wrong type loaded. File at {file_manager.predictors_dir(folder=folder)}//{filename} is not from type NeuralNetwork'
+        f'Wrong type loaded. File at {str(Path(file_manager.predictors_dir(), folder))}//{filename} is not from type NeuralNetwork'
 
     # load in the Sequential neural network
     neural_network.load_sequential(folder=folder)

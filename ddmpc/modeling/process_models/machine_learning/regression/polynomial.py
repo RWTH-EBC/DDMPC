@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Union, Callable, Optional
 
 import casadi as ca
@@ -7,7 +8,7 @@ from sklearn import linear_model
 import ddmpc.utils.formatting as fmt
 from ddmpc.data_handling.processing_data import TrainingData
 from ddmpc.modeling.predicting import Predictor
-from ddmpc.utils import file_manager
+from ddmpc.utils import FileManager as file_manager
 from ddmpc.utils.pickle_handler import read_pkl
 
 
@@ -98,7 +99,10 @@ class LinearRegression(Predictor):
 
 def load_LinearRegression(filename: str, folder: str = None) -> LinearRegression:
 
-    lr = read_pkl(filename, file_manager.predictors_dir(folder=folder))
+    if folder is None:
+        folder = ''
+
+    lr = read_pkl(filename, str(Path(file_manager.predictors_dir(), folder)))
 
     assert isinstance(lr, LinearRegression), 'Wrong type loaded!'
 

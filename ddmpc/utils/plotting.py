@@ -1,6 +1,7 @@
 import datetime
 import locale
 import math
+from pathlib import Path
 from typing import Optional, Iterator, Callable
 
 import matplotlib
@@ -12,6 +13,7 @@ from matplotlib.axes._axes import _log
 from matplotlib.ticker import FuncFormatter
 
 import ddmpc.utils.formatting as fmt
+from ddmpc.utils.file_manager import FileManager as file_manager
 from ddmpc.modeling.features.features import Feature, Controlled, Constructed
 from ddmpc.utils.time import *
 
@@ -159,7 +161,7 @@ class Plotter:
             show_plot: bool = True,
             current_time: int = None,
             save_plot: bool = False,
-            filepath: str = None,
+            save_name: str = None,
     ):
 
         # build plot
@@ -170,10 +172,10 @@ class Plotter:
         # save plot
         if save_plot:
 
-            if filepath is None:
+            if save_name is None:
                 raise ValueError('You must provide a filepath when saving the plot')
 
-            plt.savefig(filepath)
+            plt.savefig(str(Path(file_manager.plots_dir(), save_name)))
 
         # show plot
         if show_plot:
