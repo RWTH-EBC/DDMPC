@@ -19,7 +19,6 @@ TAirRoom.mode = Economic(
     night_lb=273.15 + 17,
     night_ub=273.15 + 28,
     weekend=True,  # Considers the nighttime constraints for weekends if true
-    time_offset=0,  # UNIX Time Offset (relevant for real-life systems)
 )
 
 """ Initialize Model Predictive Controller """

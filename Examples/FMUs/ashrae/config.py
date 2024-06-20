@@ -162,7 +162,7 @@ weekly_cos = Disturbance(TimeFunc(name="weekly_cos", func=cos_w))
 """ Define the controlled system """
 model = Model(*Feature.all)  # pass all features to the model
 system = FMU(
-    model=model, step_size=60 * 15, name="ashrae140_900_set_point_fmu.fmu"
+    model=model, step_size=60 * 15, name="ashrae140_900_set_point_fmu.fmu", time_offset=0
 )  # initialize system
 
 """ Define the Inputs and Outputs of the
