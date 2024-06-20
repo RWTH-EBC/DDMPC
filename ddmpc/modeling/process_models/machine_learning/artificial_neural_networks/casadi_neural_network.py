@@ -6,6 +6,7 @@ from typing import Union
 
 from casadi import *
 from keras import models, layers, Sequential
+from tensorflow import TensorShape
 
 
 class Layer(ABC):
@@ -30,14 +31,29 @@ class Layer(ABC):
             self.activation: Function = self.get_activation(layer.get_config()['activation'])
 
         # input / output shape
-        self.input_shape = layer.input_shape[1:]
-        self.output_shape = layer.output_shape[1:]
+        try:
+            if isinstance(layer.input.shape, tuple):
+                self.input_shape = layer.input.shape[1:]
+            elif isinstance(layer.input.shape, TensorShape):
+                self.input_shape = tuple(layer.input.shape[1:].as_list())
+            else:
+                self.input_shape = None
+        except AttributeError:
+            self.input_shape = None
+
+        try:
+            if isinstance(layer.output.shape, tuple):
+                self.output_shape = layer.output.shape[1:]
+            elif isinstance(layer.output.shape, TensorShape):
+                self.output_shape = tuple(layer.output.shape[1:].as_list())
+            else:
+                self.output_shape = None
+        except AttributeError:
+            self.output_shape = None
 
         # update the dimensions to two dimensions
         self.update_dimensions()
 
-        # symbolic input layer
-        self.input_layer = MX.sym('input_layer', self.input_shape[0], self.input_shape[1])
 
     def __str__(self):
         attr = list()
@@ -80,14 +96,18 @@ class Layer(ABC):
         CasADi does only work with two dimensional arrays. So the dimensions must be updated.
         """
 
-        if len(self.input_shape) == 1:
+        if self.input_shape is None:
+            pass
+        elif len(self.input_shape) == 1:
             self.input_shape = (1, self.input_shape[0])
         elif len(self.input_shape) == 2:
             self.input_shape = (self.input_shape[0], self.input_shape[1])
         else:
             raise ValueError("Please check input dimensions.")
 
-        if len(self.output_shape) == 1:
+        if self.output_shape is None:
+            pass
+        elif len(self.output_shape) == 1:
             self.output_shape = (1, self.output_shape[0])
         elif len(self.output_shape) == 2:
             self.output_shape = (self.output_shape[0], self.output_shape[1])
@@ -144,13 +164,15 @@ class Dense(Layer):
         self.weights, self.biases = layer.get_weights()
 
         # check input dimension
-        if self.input_shape[1] != self.weights.shape[0]:
-            raise ValueError(f'Please check the input dimensions of this layer. Layer with error: {self.name}')
+        # if self.input_shape[1] != self.weights.shape[0]:
+        #     raise ValueError(f'Please check the input dimensions of this layer. Layer with error: {self.name}')
 
     def forward(self, input):
 
         # forward pass
-        f = self.activation(input @ self.weights + self.biases.reshape(1, self.biases.shape[0]))
+        length = input.shape[0]
+        f = self.activation(input @ self.weights + np.repeat(self.biases.reshape(1, self.biases.shape[0]),
+                                                             input.shape[0], axis=0))
 
         return f
 
@@ -208,8 +230,6 @@ class BatchNormalising(Layer):
             axis = self.config['axis'][0]
             raise ValueError(f'Dimension mismatch. Normalized axis: {axis}')
 
-        # symbolic input layer
-        self.input_layer = MX.sym('input_layer', self.input_shape[0], self.input_shape[1])
 
     def forward(self, input):
 
@@ -236,86 +256,84 @@ class BatchNormalising(Layer):
         return layers.BatchNormalization(weights=self.weights, epsilon=self.epsilon)
 
 
-class LSTM(Layer):
-    """
-    Long Short Term Memory cell.
-    """
+class Normalization(Layer):
 
-    def __init__(self, layer: layers.LSTM):
-
-        super(LSTM, self).__init__(layer)
-
-        # recurrent activation
-        self.recurrent_activation = self.get_activation(layer.get_config()['recurrent_activation'])
-
-        # load weights and biases
-        W = layer.get_weights()[0]
-        U = layer.get_weights()[1]
-        b = layer.get_weights()[2]
-
-        # weights (kernel)
-        self.W_i = W[:, :self.units]
-        self.W_f = W[:, self.units: self.units * 2]
-        self.W_c = W[:, self.units * 2: self.units * 3]
-        self.W_o = W[:, self.units * 3:]
-
-        # weights (recurrent kernel)
-        self.U_i = U[:, :self.units]
-        self.U_f = U[:, self.units: self.units * 2]
-        self.U_c = U[:, self.units * 2: self.units * 3]
-        self.U_o = U[:, self.units * 3:]
-
-        # biases
-        self.b_i = np.expand_dims(b[:self.units], axis=0)
-        self.b_f = np.expand_dims(b[self.units: self.units * 2], axis=0)
-        self.b_c = np.expand_dims(b[self.units * 2: self.units * 3], axis=0)
-        self.b_o = np.expand_dims(b[self.units * 3:], axis=0)
-
-        # initial memory and output
-        self.h_0 = np.zeros((1, self.units))
-        self.c_0 = np.zeros((1, self.units))
+    def __init__(self, layer: layers.Normalization):
+        super(Normalization, self).__init__(layer)
+        if len(layer.mean.numpy().shape) == 3:
+            self.mean = layer.mean.numpy()[-1]
+            self.var = layer.variance.numpy()[-1]
+        elif len(layer.mean.numpy().shape) == 2:
+            self.mean = layer.mean.numpy()
+            self.var = layer.variance.numpy()
+        else:
+            raise Exception(
+                f'Normalization layer: Expecting dimension to be 2 or 3, was {len(layer.mean.numpy().shape)}')
 
     def forward(self, input):
-
-        # check input shape
-        if input.shape != self.input_shape:
-            print('Dimension mismatch!')
-
-        # initial
-        c = self.c_0
-        h = self.h_0
-
-        # number of time steps
-        steps = self.input_shape[0]
-
-        # forward pass
-        for i in range(steps):
-
-            # input for the current step
-            x = input[i, :]
-
-            # calculate memory(c) and output(h)
-            c, h = self.step(x, c, h)
-
-        # here the output has to be transposed, because of the dense layer implementation
-        return h
-
-    def step(self, x_t, c_prev, h_prev):
-
-        # gates
-        i_t = self.recurrent_activation(x_t @ self.W_i + h_prev @ self.U_i + self.b_i)
-        f_t = self.recurrent_activation(x_t @ self.W_f + h_prev @ self.U_f + self.b_f)
-        o_t = self.recurrent_activation(x_t @ self.W_o + h_prev @ self.U_o + self.b_o)
-        c_t = self.activation(x_t @ self.W_c + h_prev @ self.U_c + self.b_c)
-
-        # memory and output
-        c_next = f_t * c_prev + i_t * c_t
-        h_next = o_t * self.activation(c_next)
-
-        return c_next, h_next
+        return (input - np.repeat(self.mean, input.shape[0], axis=0)) / \
+            np.repeat(np.sqrt(self.var), input.shape[0], axis=0)
 
     def to_keras_layer(self):
-        raise NotImplementedError("LSTM does not support this function.")
+        raise NotImplementedError()
+
+
+class Cropping1D(Layer):
+
+    def __init__(self, layer: layers.Normalization):
+        super(Cropping1D, self).__init__(layer)
+        self.cropping = layer.cropping
+
+    def forward(self, input):
+        return input[self.cropping[0]:input.shape[0] - self.cropping[1], :]
+
+    def to_keras_layer(self):
+        return layers.Cropping1D(self.cropping)
+
+
+class Concatenate(Layer):
+
+    def __init__(self, layer: layers.Normalization):
+        super(Concatenate, self).__init__(layer)
+        self.axis = layer.axis
+
+    def forward(self, *input):
+        if self.axis == -1 or self.axis == 2:
+            return horzcat(*input)
+        elif self.axis == 1:
+            return vertcat(*input)
+        else:
+            raise NotImplementedError(f'Concatenate layer with axis={self.axis} not implemented yet.')
+
+    def to_keras_layer(self):
+        return layers.Concatenate(axis=self.axis)
+
+
+class Reshape(Layer):
+
+    def __init__(self, layer: layers.Normalization):
+        super(Reshape, self).__init__(layer)
+        self.shape = layer.target_shape
+
+    def forward(self, input):
+        return reshape(input, self.shape[0], self.shape[1])
+
+    def to_keras_layer(self):
+        return layers.Reshape(target_shape=self.shape)
+
+
+class Add(Layer):
+    def __init__(self, layer: layers.Add):
+        super(Add, self).__init__(layer)
+
+    def forward(self, *input):
+        init = 0
+        for inp in input:
+            init += inp
+        return init
+
+    def to_keras_layer(self):
+        return layers.Add()
 
 
 class Rescaling(Layer):
@@ -345,7 +363,7 @@ class Rescaling(Layer):
         return layers.Rescaling(offset=self.offset, scale=self.scale)
 
 
-class CasadiNeuralNetwork:
+class CasadiSequential:
     """
     Generic implementations of sequential Keras models in CasADi.
     """
@@ -356,7 +374,12 @@ class CasadiNeuralNetwork:
             - Dense (Fully connected layer)
             - Flatten (Reduces the input dimension to 1)
             - BatchNormalizing (Normalization)
-            - LSTM (Recurrent Cell)
+            - Normalization
+            - Cropping 1d
+            - Concatenate
+            - Reshape
+            - Add
+            - Rescaling
         :param model: Sequential Keras Model
         """
 
@@ -428,10 +451,18 @@ class CasadiNeuralNetwork:
                 self.add_layer(Flatten(layer))
             elif 'batch_normalization' in name:
                 self.add_layer(BatchNormalising(layer))
-            elif 'lstm' in name:
-                self.add_layer(LSTM(layer))
             elif 'rescaling' in name:
                 self.add_layer(Rescaling(layer))
+            elif 'cropping1d' in name:
+                self.add_layer(Cropping1D(layer))
+            elif 'normalization' in name:
+                self.add_layer(Normalization(layer))
+            elif 'concatenate' in name:
+                self.add_layer(Concatenate(layer))
+            elif 'reshape' in name:
+                self.add_layer(Reshape(layer))
+            elif 'add' in name:
+                self.add_layer(Add(layer))
             else:
                 raise NotImplementedError(f'Type "{name}" is not supported.')
 
@@ -441,7 +472,8 @@ class CasadiNeuralNetwork:
     def update_forward(self):
 
         # create symbolic input layer
-        input_layer = self.layers[0].input_layer
+        layer = self.layers[0]
+        input_layer = MX.sym('input_layer', layer.input_shape[0], layer.input_shape[1])
 
         # initialize
         f = input_layer
