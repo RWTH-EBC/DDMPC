@@ -1,11 +1,8 @@
 """ mpc.py: Model Predictive Controller, Objectives and Constraints"""
 import os
-from pathlib import Path
 
 from ddmpc.controller.conventional import Controller
 from ddmpc.controller.model_predictive.nlp import NLP, NLPSolution
-from ddmpc.utils.file_manager import FileManager as file_manager
-from ddmpc.utils.pickle_handler import read_pkl, write_pkl
 from ddmpc.utils.plotting import *
 
 
