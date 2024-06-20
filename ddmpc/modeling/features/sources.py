@@ -174,12 +174,18 @@ class Source(ABC):
 
 
 class Readable(Source):
+
     def __init__(
         self,
         name: str,
         read_name: str,
         plt_opts: PlotOptions,
     ):
+        """
+        :param name: colloquial name of instance
+        :param read_name: name in BOPTEST framework
+        :param plt_opts: plot options for instance (line color, line style, label)
+        """
         super(Readable, self).__init__(name=name, plt_opts=plt_opts)
 
         self.read_name: str = read_name

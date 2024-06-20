@@ -152,9 +152,11 @@ class Control(Feature):
         self.cutoff:    float = cutoff
 
     def _update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
 
@@ -173,9 +175,11 @@ class Disturbance(Feature):
         self.forecast_name: str = forecast_name
 
     def _update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
 
@@ -194,18 +198,22 @@ class Connection(Feature):
         )
 
     def _update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
 
 class Tracking(Feature):
 
     def _update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """returns the exact same df given as input as output"""
         return df
 
 

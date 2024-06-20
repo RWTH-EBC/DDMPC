@@ -13,16 +13,13 @@ import numpy as np
 
 class Mode(abc.ABC):
 
-
     def __init__(
             self,
-            day_start:      int = 8,
-            day_end:        int = 16,
+            day_start: int = 8,  #default
+            day_end: int = 16,  #default
     ):
-
         self.day_start: int = day_start
-        self.day_end:   int = day_end
-
+        self.day_end: int = day_end
 
     def __str__(self):
         return f'Mode({self.__class__.__name__})'
@@ -52,7 +49,7 @@ class Mode(abc.ABC):
         ...
 
     def _day(self, time: int) -> bool:
-        """ returns True if the given time is during day """
+        """ returns True if the given time is during day (defined by day_start and day_end) """
 
         time = datetime.datetime.fromtimestamp(time)
 
@@ -67,14 +64,17 @@ class Mode(abc.ABC):
 
 
 class Steady(Mode):
-    """ steady values for day and night """
+    """
+    steady set points for day and night
+    day defined by day_start and day_end
+    """
 
     def __init__(
             self,
-            day_start:      int = 8,
-            day_end:        int = 16,
-            day_target:     float = 273.15 + 20,
-            night_target:   float = 273.15 + 18,
+            day_start: int = 8,
+            day_end: int = 16,
+            day_target: float = 273.15 + 20,
+            night_target: float = 273.15 + 18,
     ):
 
         super(Steady, self).__init__(day_start=day_start, day_end=day_end)
@@ -83,17 +83,23 @@ class Steady(Mode):
         self.night_target = night_target
 
     def error(self, value: float, time: int) -> float:
-        """ Returns the control error """
+        """ Returns the control error at a given time"""
 
         return self.target(time) - value
 
     def bounds(self, time: int) -> tuple[float, float]:
-        """ returns the lower and upper bound for a given time """
+        """
+        returns the lower and upper bound at a given time
+        since there are no upper and lower bounds in steady mode, it returns NaN
+        """
 
         return numpy.nan, numpy.nan
 
     def target(self, time: int) -> float:
-        """ returns the control target for a given time """
+        """
+        returns the control target for a given time
+        returns day_target only during weekdays, otherwise night_target
+        """
 
         if self._weekend(time):
             return self.night_target
@@ -105,37 +111,55 @@ class Steady(Mode):
 
 
 class Random(Mode):
-    """ random sequence of set points between bounds """
+    """
+    random sequence of set points between bounds
+    day defined by day_start and day_end
+    different bounds for day and night
+    """
 
     def __init__(
             self,
-            day_start:      int = 8,
-            day_end:        int = 16,
-            day_lb:         float = 273.15 + 19,
-            night_lb:       float = 273.15 + 16,
-            day_ub:         float = 273.15 + 21,
-            night_ub:       float = 273.15 + 24,
-            interval:       int = 60 * 60 * 4,
+            day_start: int = 8,
+            day_end: int = 16,
+            day_lb: float = 273.15 + 19,
+            night_lb: float = 273.15 + 16,
+            day_ub: float = 273.15 + 21,
+            night_ub: float = 273.15 + 24,
+            interval: int = 60 * 60 * 4,
     ):
+        """
+        random sequence of set points between given bounds
 
+        :param day_start: start time of day
+        :param day_end: end time of day
+        :param day_lb: lower bound for day (day_start until day_end)
+        :param night_lb: lower bound for night
+        :param day_ub: upper bound for day (day_start until day_end)
+        :param night_ub: upper bound for night
+        :param interval: time interval between two randomly generated targets / set points
+        """
         super(Random, self).__init__(day_start=day_start, day_end=day_end)
 
-        self.day_lb:    float = day_lb
-        self.night_lb:  float = night_lb
-        self.day_ub:    float = day_ub
-        self.night_ub:  float = night_ub
+        self.day_lb: float = day_lb
+        self.night_lb: float = night_lb
+        self.day_ub: float = day_ub
+        self.night_ub: float = night_ub
 
-        self.interval:              int = interval
-        self.last_randomization:    Optional[int] = None
-        self.current_target:        Optional[int] = None
+        self.interval: int = interval
+
+        self.last_randomization: Optional[int] = None  # at initialization there hasn't been a randomization yet
+        self.current_target: Optional[int] = None   # at initialization there is no current target yet
 
     def error(self, value: float, time: int) -> float:
-        """ Returns the control error """
+        """ Returns the control error at a given time"""
 
         return self.target(time) - value
 
     def bounds(self, time: int) -> tuple[float, float]:
-        """ returns the lower and upper bound for a given time """
+        """
+        returns the lower and upper bound at a given time as tuple
+        returns day bounds only during weekdays, otherwise night bounds
+        """
 
         if self._weekend(time):
             return self.night_lb, self.night_ub
@@ -146,7 +170,9 @@ class Random(Mode):
         return self.night_lb, self.night_ub
 
     def target(self, time: int) -> float:
-        """ returns the control target for a given time """
+        """
+        returns the control target at a given time
+        and returns a new target every [interval] seconds """
 
         lb, ub = self.bounds(time)
 
@@ -157,18 +183,24 @@ class Random(Mode):
             self.current_target = random.uniform(lb, ub)
 
         def new_target():
+            """
+            returns a new target in K within bounds
+            the difference between the current target and new target is 1 K minimum
+            """
             target = random.uniform(lb, ub)
 
+            # if the change of the target would be lower than 1 K, randomize again
             if abs(self.current_target - target) < 1:
                 target = new_target()
 
             return target
 
-        if time - self.last_randomization >= self.interval or\
-                self.current_target is None or\
-                self.current_target < lb or\
+        # if the time [interval] passed since last randomization or there is no target yet or the target is not within
+        # bounds, generate a new target and set current time as time of last randomization
+        if time - self.last_randomization >= self.interval or \
+                self.current_target is None or \
+                self.current_target < lb or \
                 ub < self.current_target:
-
             self.current_target = new_target()
             self.last_randomization = time
 
@@ -180,34 +212,34 @@ class Identification(Mode):
 
     def __init__(
             self,
-            day_start:      int = 8,
-            day_end:        int = 16,
-            day_lb:         float = 273.15 + 19,
-            night_lb:       float = 273.15 + 16,
-            day_ub:         float = 273.15 + 21,
-            night_ub:       float = 273.15 + 24,
+            day_start: int = 8,
+            day_end: int = 16,
+            day_lb: float = 273.15 + 19,
+            night_lb: float = 273.15 + 16,
+            day_ub: float = 273.15 + 21,
+            night_ub: float = 273.15 + 24,
 
-            min_interval:   int = 60 * 60 * 2,
-            max_interval:   int = 60 * 60 * 5,
-            min_change:     int = 1,
-            max_change:     int = 2,
+            min_interval: int = 60 * 60 * 2,
+            max_interval: int = 60 * 60 * 5,
+            min_change: int = 1,
+            max_change: int = 2,
     ):
 
         super(Identification, self).__init__(day_start=day_start, day_end=day_end)
 
-        self.day_lb:    float = day_lb
-        self.night_lb:  float = night_lb
-        self.day_ub:    float = day_ub
-        self.night_ub:  float = night_ub
+        self.day_lb: float = day_lb
+        self.night_lb: float = night_lb
+        self.day_ub: float = day_ub
+        self.night_ub: float = night_ub
 
-        self.max_interval:          int = max_interval
-        self.min_interval:          int = min_interval
-        self.interval:              int = random.randrange(min_interval, max_interval)
-        self.min_change:            int = min_change
-        self.max_change:            int = max_change
+        self.max_interval: int = max_interval
+        self.min_interval: int = min_interval
+        self.interval: int = random.randrange(min_interval, max_interval)
+        self.min_change: int = min_change
+        self.max_change: int = max_change
 
-        self.last_randomization:    Optional[int] = None
-        self.current_target:        Optional[int] = None
+        self.last_randomization: Optional[int] = None
+        self.current_target: Optional[int] = None
 
     def error(self, value: float, time: int) -> float:
         """ Returns the control error """
@@ -258,11 +290,10 @@ class Identification(Mode):
 
             return target
 
-        if time - self.last_randomization >= self.interval or\
-                self.current_target is None or\
-                self.current_target < lb or\
+        if time - self.last_randomization >= self.interval or \
+                self.current_target is None or \
+                self.current_target < lb or \
                 ub < self.current_target:
-
             # new interval
             self.interval = int(random.uniform(self.min_interval, self.max_interval))
 
@@ -273,30 +304,48 @@ class Identification(Mode):
 
 
 class Economic(Mode):
-    """ bounds for day and night """
+    """
+    sets bounds for day and night, no specific set point only boundaries given
+    day defined by day_start and day_end
+    different bounds for day and night
+    """
 
     def __init__(
             self,
-            day_start:  int = 8,
-            day_end:    int = 16,
-            day_lb:     float = 273.15 + 19,
-            day_ub:     float = 273.15 + 22,
-            night_lb:   float = 273.15 + 16,
-            night_ub:   float = 273.15 + 25,
-            weekend:    bool = True,
+            day_start: int = 8,
+            day_end: int = 16,
+            day_lb: float = 273.15 + 19,
+            day_ub: float = 273.15 + 22,
+            night_lb: float = 273.15 + 16,
+            night_ub: float = 273.15 + 25,
+            weekend: bool = True,
     ):
+        """
+        sets bounds for day and night, no specific set point only boundaries given
+
+        :param day_start: start time of day
+        :param day_end: end time of day
+        :param day_lb: lower bound for day (day_start until day_end)
+        :param night_lb: lower bound for night
+        :param day_ub: upper bound for day (day_start until day_end)
+        :param night_ub: upper bound for night
+        :param weekend: set True if on weekend days the night boundaries should be used
+        """
 
         super(Economic, self).__init__(day_start=day_start, day_end=day_end)
 
-        self.day_lb:    float = day_lb
-        self.night_lb:  float = night_lb
-        self.day_ub:    float = day_ub
-        self.night_ub:  float = night_ub
+        self.day_lb: float = day_lb
+        self.night_lb: float = night_lb
+        self.day_ub: float = day_ub
+        self.night_ub: float = night_ub
 
-        self.weekend:   bool = weekend
+        self.weekend: bool = weekend
 
     def error(self, value: float, time: int) -> float:
-        """ Returns the control error """
+        """
+        Returns the control error at a given time. Since there is no actual set point but only boundaries,
+        the control error is 0 within bounds
+        """
 
         lb, ub = self.bounds(time)
 
@@ -309,7 +358,10 @@ class Economic(Mode):
         return 0
 
     def bounds(self, time: int) -> tuple[float, float]:
-        """ returns the lower and upper bound for a given time """
+        """
+        returns the lower and upper bound for a given time
+        If boolean weekend is True, on weekend days the night boundaries are used
+        """
 
         if self._weekend(time) and self.weekend:
             return self.night_lb, self.night_ub
@@ -320,7 +372,10 @@ class Economic(Mode):
         return self.night_lb, self.night_ub
 
     def target(self, time: int) -> float:
-        """ returns the control target for a given time """
+        """
+        returns the control target for a given time
+        since there is no actual set point but only boundaries given, here NaN is returned
+        """
 
         return numpy.nan
 
@@ -360,7 +415,6 @@ class Power(Mode):
 class NoMode(Mode):
 
     def __init__(self):
-
         super(NoMode, self).__init__(day_start=np.nan, day_end=np.nan)
 
     def error(self, time: int, value: float) -> float:

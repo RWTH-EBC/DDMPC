@@ -35,7 +35,10 @@ class Change(Constructed):
         return [self.base]
 
     def update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
-
+        """
+        Calculates the difference between the current and previous time step (based on idx) and writes it to
+        the current row in the dataframe df
+        """
         if idx <= 1:
             return df
 

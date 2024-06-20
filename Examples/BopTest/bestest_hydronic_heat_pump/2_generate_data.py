@@ -2,7 +2,7 @@ from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 name = 'pid_data'
 
-TAirRoom.mode = TAirRoom_random
+TAirRoom.mode = TAirRoom_random  # change mode previously defined in configuration.py
 
 # PID controller for the HP
 HP_PID = PID(
@@ -14,13 +14,14 @@ HP_PID = PID(
     Td=0,
 )
 
+
 system.setup(
     start_time=0,
     warmup_period=one_week,
-    active_control_layers={"oveHeaPumY_activate": 1},
+    active_control_layers={"oveHeaPumY_activate": 1},  # possible model inputs can be found in BOPTEST documentation
 )
 
-dc_random = system.run(controllers=[HP_PID], duration=one_day * 14)
+dc_random = system.run(controllers=[HP_PID], duration=one_day * 2)  #TODO: change back to 14
 dh = DataHandler(
     [
         dc_random

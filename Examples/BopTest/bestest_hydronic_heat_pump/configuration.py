@@ -1,21 +1,24 @@
 from ddmpc import *
 
-time_offset = 1546300800
+time_offset = 1546300800    # unix time stamp: time offset to set the date to 01.01.2019 (0 is 01.01.1970)
 
 TAirRoom_steady = Steady(day_start=8, day_end=15, day_target=290.15, night_target=294.15)
 TAirRoom_random = Random(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15,
                          interval=3600 * 6)
 TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15)
 
+# creates TAirRoom as Controlled object. An output given through BOPTEST framework is used as source, the mode is set
 TAirRoom = Controlled(
     source=Readable(
         name="TAir",
-        read_name="reaTZon_y",
+        read_name="reaTZon_y",  # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=red, line=line_solid),
     ),
     mode=TAirRoom_steady,
 )
 
+# Change calculates the change of in this case the room temperature between the current and the previous time step
+# Connection
 TAirRoom_change = Connection(Change(base=TAirRoom))
 
 t_amb = Disturbance(
@@ -113,7 +116,7 @@ model = Model(*Feature.all)
 system = BopTest(
     model=model,
     step_size=one_minute * 15,
-    url="http://127.0.0.1:5000",
+    url="http://134.130.166.203:5000/",
     time_offset=time_offset,
 )
 
