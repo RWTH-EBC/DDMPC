@@ -1,11 +1,8 @@
 """ mpc.py: Model Predictive Controller, Objectives and Constraints"""
 import os
-from pathlib import Path
 
 from ddmpc.controller.conventional import Controller
 from ddmpc.controller.model_predictive.nlp import NLP, NLPSolution
-from ddmpc.utils.file_manager import FileManager as file_manager
-from ddmpc.utils.pickle_handler import read_pkl, write_pkl
 from ddmpc.utils.plotting import *
 
 
@@ -148,9 +145,8 @@ class ModelPredictive(Controller):
         directory: str = file_manager.experiment_dir()
 
         df['period'] = current_time
-        df['forecast_time'] = df.index * self.step_size
+        df['forecast_time'] = df.index * self.step_size_model
 
-        df['time'] = current_time + df.index * self.step_size_model
         cols = list(df.columns)
         cols.insert(0, cols.pop(cols.index('forecast_time')))
         cols.insert(0, cols.pop(cols.index('period')))
