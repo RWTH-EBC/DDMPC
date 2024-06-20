@@ -1,7 +1,7 @@
 import pathlib
 import shutil
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional
 import pandas as pd
 import ddmpc.systems
 from ddmpc.systems import System
@@ -21,6 +21,8 @@ class FMU(System):
             model:      ddmpc.modeling.Model,
             step_size:  int,
             name: str,
+            time_offset: int,
+            **kwargs,
     ):
         """
         initialize FMU System class
@@ -39,6 +41,7 @@ class FMU(System):
         super().__init__(
             model=model,
             step_size=step_size,
+            time_offset=time_offset
         )
 
         self.disturbances: Optional[pd.DataFrame] = None
@@ -47,7 +50,7 @@ class FMU(System):
             self.load_disturbances()
 
         except FileNotFoundError:
-            self.simulate_disturbances()
+            self.simulate_disturbances(**kwargs)
 
     @property
     def fmu_path(self):
@@ -122,6 +125,8 @@ class FMU(System):
 
             # save to df
             self.disturbances = df
+
+        self.close()
 
     def _get_forecast(self, length: int) -> pd.DataFrame:
         """ Returns forecast for the current prediction horizon """
@@ -204,7 +209,7 @@ class FMU(System):
         """ Simulates one step """
 
         self.fmu.doStep(
-            currentCommunicationPoint=self.time,
+            currentCommunicationPoint=self.time - self.time_offset,
             communicationStepSize=self.step_size
         )
 
@@ -224,7 +229,7 @@ class FMU(System):
         if self.fmu is not None:
             raise SimulationError(message='Please make sure the simulation was closed.')
 
-        self.time = start_time
+        self.time = start_time + self.time_offset
 
         # create a slave
         self.fmu = fmpy.fmi2.FMU2Slave(

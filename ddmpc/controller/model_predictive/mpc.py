@@ -24,6 +24,8 @@ class ModelPredictive(Controller):
 
         super(ModelPredictive, self).__init__(step_size=step_size)
 
+        self.step_size_model = step_size / nlp.control_change_step
+
         self.nlp:                   NLP = nlp
         self._forecast_callback:    Callable = forecast_callback
 
@@ -44,7 +46,7 @@ class ModelPredictive(Controller):
         current_time = past['time'].iloc[-1]
 
         # get the forecast and past data
-        forecast = self._forecast_callback(horizon_in_seconds=int(self.nlp.N*self.step_size))
+        forecast = self._forecast_callback(horizon_in_seconds=int(self.nlp.N*self.step_size_model))
 
         # solve the nlp
         par_vals: list[float] = self._get_par_vals(past, forecast, current_time)
@@ -65,11 +67,14 @@ class ModelPredictive(Controller):
 
     def _plot_solution(self, df: pd.DataFrame, current_time: int):
 
+        if not self.save_solution_plot and not self.show_solution_plot:
+            return
+
         if self._solution_plotter is None:
             return
 
         # add the time column to the DataFrame
-        df['time'] = current_time + df.index * self.step_size
+        df['time'] = current_time + df.index * self.step_size_model
 
         self._solution_plotter.plot(
             df,
@@ -87,7 +92,7 @@ class ModelPredictive(Controller):
         # iterate over all par vars
         for nlp_var in self.nlp._par_vars:
 
-            t = current_time + self.step_size * nlp_var.k
+            t = current_time + self.step_size_model * nlp_var.k
 
             # if k <= 0 use the past DataFrame
             if nlp_var.k <= 0:
@@ -144,7 +149,7 @@ class ModelPredictive(Controller):
             solutions = dict()
 
         # add the SimTime column to the DataFrame
-        df['time'] = current_time + df.index * self.step_size
+        df['time'] = current_time + df.index * self.step_size_model
         solutions[current_time] = df
 
         # save solutions
