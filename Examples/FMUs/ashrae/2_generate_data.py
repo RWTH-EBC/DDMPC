@@ -4,7 +4,7 @@ from Examples.FMUs.ashrae.config import *
 This script is used to generate the necessary training data
 """
 
-TAirRoom.mode = Random( # Set the Air temperature mode to random for identification
+TAirRoom.mode = Random(  # Set the Air temperature mode to random for identification
     day_start=8,
     day_end=16,
     day_lb=273.15 + 19,
@@ -12,6 +12,19 @@ TAirRoom.mode = Random( # Set the Air temperature mode to random for identificat
     day_ub=273.15 + 21,
     night_ub=273.15 + 24,
     interval=60 * 60 * 4,   # change set point after interval
+)
+
+
+# Example Function (not used)
+def tab_func(inp):
+    return inp * 0.005 + 2
+
+
+TabsFunc = CtrlFunction(
+    function=tab_func,
+    fun_in=dry_bul,
+    fun_out=Q_flowTabs,
+    step_size=60 * 15
 )
 
 # PID controller for the TABS
@@ -43,7 +56,7 @@ dh = DataHandler(
 )
 
 # Plot Training data
-pid_plotter.plot(df=dh.containers[0].df, show_plot=True, save_plot=False)
+pid_plotter.plot(df=dh.containers[0].df, show_plot=True, save_plot=True, save_name='train.png')
 
 # Save training data
 dh.save("pid_data", override=True)
