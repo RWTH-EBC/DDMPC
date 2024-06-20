@@ -17,11 +17,13 @@ class BopTest(System):
             model: Model,
             step_size: int,
             url: str,
+            time_offset: int,
     ):
 
         super(BopTest, self).__init__(
             step_size=step_size,
             model=model,
+            time_offset=time_offset
         )
 
         self.url = url
@@ -85,9 +87,12 @@ class BopTest(System):
         self.put(url=self.url_step, data={'step': self.step_size})
 
         # initialization
-        init_params = {'start_time': start_time, 'warmup_period': warmup_period}
-        measurements = self.put(url=self.url_initialize, data=init_params)
-        self.time = measurements['time']
+        if scenario is None:
+            init_params = {'start_time': start_time, 'warmup_period': warmup_period}
+            measurements = self.put(url=self.url_initialize, data=init_params)
+        else:
+            measurements = self.put(url=self.url_scenario, data=scenario)['time_period']
+        self.time = measurements['time'] + self.time_offset
 
         self.controls.clear()
 
@@ -104,7 +109,10 @@ class BopTest(System):
     def advance(self):
 
         self.measurements = self.post(url=self.url_advance, data=self.controls)
-        self.time = self.measurements['time']
+        try:
+            self.time = self.measurements['time'] + self.time_offset
+        except:
+            pass
 
     def close(self):
         pass
@@ -127,7 +135,9 @@ class BopTest(System):
             raise ReadingError(f'The following variables could not be read: {reading_errors}')
 
         # only return the values for the readable columns
-        return {var_name: self.measurements[var_name] for var_name in ['time'] + self.readable}
+        mea = {var_name: self.measurements[var_name] for var_name in self.readable}
+        mea['time'] = self.time
+        return mea
 
     def write(self, values: dict):
         self.controls.update(values)
@@ -142,6 +152,8 @@ class BopTest(System):
         data = {'point_names': self.forecast_names, 'horizon': horizon_in_seconds, 'interval': self.step_size}
         response = self.put(self.url_forecast, data=data)
         forecast = pd.DataFrame(response)
+
+        forecast['time'] = forecast['time'] + self.time_offset
 
         return forecast
 
@@ -165,3 +177,10 @@ class BopTest(System):
 
         ddmpc.utils.formatting.print_table(rows=rows)
         print()
+
+    def get_kpis(self):
+        """
+        Get KPIs at the end of the Simulation
+        :return:
+        """
+        return requests.get(url=urljoin(self.url, 'kpi')).json()['payload']
