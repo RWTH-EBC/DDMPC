@@ -238,11 +238,11 @@ class Identification(Mode):
 
         def new_target():
 
-            max_pos_change = min(abs(ub - self.current_target), self.max_change)
-            min_pos_change = min(abs(ub - self.current_target), self.min_change)
+            max_pos_change = min(max(ub - self.current_target, 0), self.max_change)
+            min_pos_change = min(max(ub - self.current_target, 0), self.min_change)
 
-            max_neg_change = min(abs(lb - self.current_target), self.max_change)
-            min_neg_change = min(abs(lb - self.current_target), self.min_change)
+            max_neg_change = min(max(self.current_target - lb, 0), self.max_change)
+            min_neg_change = min(max(self.current_target - lb, 0), self.min_change)
 
             pos_change = random.uniform(a=min_pos_change, b=max_pos_change)
             neg_change = - random.uniform(a=min_neg_change, b=max_neg_change)
