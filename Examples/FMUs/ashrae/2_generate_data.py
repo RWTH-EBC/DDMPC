@@ -3,6 +3,7 @@ from Examples.FMUs.ashrae.config import *
 """ 
 This script is used to generate the necessary training data
 """
+name = 'pid_data'
 
 TAirRoom.mode = Random(  # Set the Air temperature mode to random for identification
     day_start=8,
@@ -56,7 +57,7 @@ dh = DataHandler(
 )
 
 # Plot Training data
-pid_plotter.plot(df=dh.containers[0].df, show_plot=True, save_plot=True, save_name='train.png')
+pid_plotter.plot(df=dh.containers[0].df, show_plot=True, save_plot=True, save_name=f'{name}.png')
 
 # Save training data
-dh.save("pid_data", override=True)
+dh.save(name, override=True)
