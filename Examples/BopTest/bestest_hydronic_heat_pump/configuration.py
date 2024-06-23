@@ -7,10 +7,11 @@ TAirRoom_random = Random(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, 
                          interval=3600 * 6)
 TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15)
 
-# creates TAirRoom as Controlled object. An output given through BOPTEST framework is used as source, the mode is set
+# creates TAirRoom as Controlled object. An output given through BOPTEST framework is used as source
+# the mode is set as steady
 TAirRoom = Controlled(
     source=Readable(
-        name="TAir",
+        name="TAir",            # colloquial name
         read_name="reaTZon_y",  # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=red, line=line_solid),
     ),
@@ -24,7 +25,7 @@ TAirRoom_change = Connection(Change(base=TAirRoom))
 t_amb = Disturbance(
     Readable(
         name="Ambient temperature",
-        read_name="weaSta_reaWeaTDryBul_y",
+        read_name="weaSta_reaWeaTDryBul_y", # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=blue, line=line_solid, label="Ambient Temperature"),
     ),
     forecast_name="TDryBul",
@@ -33,7 +34,7 @@ t_amb = Disturbance(
 u_hp = Control(
     source=Readable(
         name="u_hp",
-        read_name="oveHeaPumY_u",
+        read_name="oveHeaPumY_u",   # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_hp"),
     ),
     lb=0,
@@ -45,7 +46,7 @@ u_hp = Control(
 rad_dir = Disturbance(
     Readable(
         name="direct radiation",
-        read_name="weaSta_reaWeaHDirNor_y",
+        read_name="weaSta_reaWeaHDirNor_y", # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=light_red, line=line_solid, label="Radiation"),
     ),
     forecast_name="HDirNor",
@@ -58,14 +59,14 @@ rad_dir_change = Connection(Change(base=rad_dir))
 power_fan = Tracking(
     Readable(
         name="el. Power Fan",
-        read_name="reaPFan_y",
+        read_name="reaPFan_y",  # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=blue, line=line_dotted, label="P_fan"),
     )
 )
 
 power_hp = Controlled(
     source=Readable(
-        read_name="reaPHeaPum_y",
+        read_name="reaPHeaPum_y",   # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         name="el. Power HP",
         plt_opts=PlotOptions(color=red, line=line_solid, label="P_hp"),
     ),
@@ -75,7 +76,7 @@ power_hp = Controlled(
 
 power_ec = Tracking(
     Readable(
-        name="el. Power emission circuit",
+        name="el. Power emission circuit",  # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         read_name="reaPPumEmi_y",
         plt_opts=PlotOptions(color=grey, line=line_dashdot, label="P_ec"),
     )
@@ -85,7 +86,7 @@ power_ec = Tracking(
 u_fan = Tracking(
     source=Readable(
         name="u_fan",
-        read_name="oveFan_u",
+        read_name="oveFan_u",   # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_fan"),
     ),
 )
@@ -96,7 +97,7 @@ u_fan_change = Tracking(Change(base=u_fan))
 price_el = Disturbance(
     Readable(
         name="el. Power Price",
-        read_name="PriceElectricPowerDynamic",
+        read_name="PriceElectricPowerDynamic",  # read name given in BOPTEST framework on https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
         plt_opts=PlotOptions(color=light_red, line=line_solid, label="Price"),
     ),
     forecast_name="PriceElectricPowerDynamic",
@@ -116,7 +117,7 @@ model = Model(*Feature.all)
 system = BopTest(
     model=model,
     step_size=one_minute * 15,
-    url="http://134.130.166.203:5000/",
+    url="http://134.130.166.203:5000/", # TODO: reset
     time_offset=time_offset,
 )
 

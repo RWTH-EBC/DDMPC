@@ -183,7 +183,7 @@ class Readable(Source):
     ):
         """
         :param name: colloquial name of instance
-        :param read_name: name in BOPTEST framework
+        :param read_name: name in BOPTEST framework, also used as column name in df
         :param plt_opts: plot options for instance (line color, line style, label)
         """
         super(Readable, self).__init__(name=name, plt_opts=plt_opts)

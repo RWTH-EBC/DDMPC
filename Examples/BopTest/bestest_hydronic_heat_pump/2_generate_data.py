@@ -2,7 +2,7 @@ from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 name = 'pid_data'
 
-TAirRoom.mode = TAirRoom_random  # change mode previously defined in configuration.py
+TAirRoom.mode = TAirRoom_random  # changes mode previously defined in configuration.py
 
 # PID controller for the HP
 HP_PID = PID(

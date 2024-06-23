@@ -12,8 +12,8 @@ class Change(Constructed):
 
     def __init__(
             self,
-            base: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            base: Union[Source, Feature],   # either Source or Feature
+            plt_opts: Union[PlotOptions, None] = None,  # Union [X, None] equals Optional[X]
     ):
 
         if isinstance(base, Feature):
