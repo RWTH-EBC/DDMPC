@@ -145,3 +145,65 @@ class PID(Controller):
         self.i = 0
         e = self.y.error
         self.e_last = e
+
+
+class CtrlFunction(Controller):
+    def __init__(
+            self,
+            function,
+            fun_in:         Controlled,
+            fun_out:        Control,
+            step_size:      int,
+            log_level:      int = logging.NORMAL,
+    ):
+        """
+        :param function: function to calculate output
+        :param fun_in: function input
+        :param fun_out: function output
+        :param step_size
+        :param log_level
+        """
+        super(CtrlFunction, self).__init__(
+            step_size=step_size,
+        )
+
+        # control and controlled feature
+        self.fun_in = fun_in
+        self.fun_out = fun_out
+
+        self.function = function
+
+        self.logger: logging.Logger = logging.Logger(prefix=str(self), level=log_level)
+
+    def __str__(self):
+        return f'{self.__class__.__name__} - {self.fun_out} controlled by {self.fun_in}'
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}'
+
+    def __call__(self, df: pd.DataFrame = None) -> tuple[dict, dict]:
+        """
+        This function is called during the simulation of the FMU.
+        It returns a dict with the control actions.
+        """
+
+        # empty control dict
+        control_dict = dict()
+
+        # set default value
+        control_dict[self.fun_out.source.col_name] = self.fun_out.default
+
+        # get output from function
+        output = self.function(df.iloc[-1][self.fun_in.source.col_name])
+
+        # Limiter
+        if output < self.fun_out.lb:
+            output = self.fun_out.lb
+        elif output > self.fun_out.ub:
+            output = self.fun_out.ub
+
+        control_dict[self.fun_out.source.col_name] = output
+
+        self.logger(message=f'output={output}', level=logging.DEBUG)
+
+        return control_dict, {}

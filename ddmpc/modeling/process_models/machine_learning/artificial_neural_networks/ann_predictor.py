@@ -139,7 +139,7 @@ class NeuralNetwork(Predictor):
             folder = ''
 
         # save the sequential to the disc
-        filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name))
+        filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name + '.keras'))
         self.sequential.save(filepath)
 
     def load_sequential(self, folder: str = None):
@@ -150,7 +150,7 @@ class NeuralNetwork(Predictor):
         if folder is None:
             folder = ''
 
-        filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name))
+        filepath = str(Path(file_manager.keras_model_filepath(), folder, self.name + '.keras'))
 
         # load Sequential from the disc
         self.sequential = models.load_model(filepath=filepath)
@@ -282,7 +282,7 @@ class NetworkTrainer:
                 )
 
             try:
-                filepath = f'{file_manager.predictors_dir()}\scores.txt'
+                filepath = f'{file_manager.predictors_dir()}/scores.txt'
                 with open(filepath, 'w') as file:
                     file.write(json.dumps(res))
             except Exception:
