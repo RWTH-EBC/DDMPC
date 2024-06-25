@@ -15,8 +15,8 @@ class Mode(abc.ABC):
 
     def __init__(
             self,
-            day_start: int = 8,  #default
-            day_end: int = 16,  #default
+            day_start: int = 8,  # default
+            day_end: int = 16,  # default
     ):
         self.day_start: int = day_start
         self.day_end: int = day_end
@@ -55,7 +55,8 @@ class Mode(abc.ABC):
 
         return self.day_start <= time.hour < self.day_end
 
-    def _weekend(self, time: int) -> bool:
+    @staticmethod
+    def _weekend(time: int) -> bool:
         """ returns True if the given time is during weekend """
 
         time = datetime.datetime.fromtimestamp(time)

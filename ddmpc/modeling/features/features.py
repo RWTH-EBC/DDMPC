@@ -9,7 +9,7 @@ from ddmpc.utils.modes import Mode
 
 class Feature(ABC):
 
-    all: list['Feature'] = list()
+    all: list['Feature'] = list()       # list of all Feature objects instantiated
 
     def __init__(
             self,
@@ -82,7 +82,6 @@ class Controlled(Feature):
             mode:   Mode,
     ):
 
-
         Feature.__init__(
             self,
             source=source,
@@ -113,12 +112,12 @@ class Controlled(Feature):
         controlled object in df and returns df
         """
 
-        row = df.index[idx] # gets the row corresponding to the given index
+        row = df.index[idx]  # gets the row corresponding to the given index
 
         self.time = int(df.loc[row, 'time'])    # gets the time from corresponding row in df
         self.value = float(df.loc[row, self.source.col_name])   # gets the value of the source / controlled (e.g. room temperature) from corresponding row in df
 
-        self.error = float(self.mode.error(value=self.value, time=self.time)) # calculates the control error considering the current mode
+        self.error = float(self.mode.error(value=self.value, time=self.time))  # calculates the control error considering the current mode
         self.target = float(self.mode.target(time=self.time))   # gets current target from mode
         self.lb, self.ub = self.mode.bounds(time=self.time)     # gets current bounds from mode
 
@@ -154,6 +153,13 @@ class Control(Feature):
             default:    float,
             cutoff:     float = None,
     ):
+        """
+        :param source: Source object
+        :param lb: Lower bound
+        :param ub: Upper bound
+        :param default: Default value
+        :param cutoff: Cutoff value
+        """
 
         Feature.__init__(
             self,
@@ -199,7 +205,7 @@ class Disturbance(Feature):
 
 class Connection(Feature):
     """
-    Helper class: connection inherits from Feature and takes instance of type Constructed as input (source)
+    Wrapper class: connection inherits from Feature and takes instance of type Constructed as input (source)
     --> connects these two
     """
     def __init__(
@@ -232,5 +238,3 @@ class Tracking(Feature):
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
         """returns the exact same df given as input as output"""
         return df
-
-
