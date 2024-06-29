@@ -16,7 +16,7 @@ class BopTest(System):
             self,
             model: Model,
             step_size: int,
-            url: str,
+            url: str,       # url of server with BOPTEST framework
             time_offset: int,
     ):
 
@@ -28,6 +28,8 @@ class BopTest(System):
 
         self.url = url
 
+        # documentation of API see https://ibpsa.github.io/project1-boptest/docs-userguide/api.html
+        # key points of documentation implemented as comments in this code
         self.url:                   str = url
         self.url_advance:           str = urljoin(url, url='advance')
         self.url_inputs:            str = urljoin(url, url='inputs')
@@ -42,8 +44,13 @@ class BopTest(System):
         self.measurements: typing.Optional[dict] = None
         self.controls: dict = dict()
 
+        # receive available control signal input point names and metadata
         self.inputs = self.get(url=self.url_inputs)
+
+        # receive available sensor signal output point names and metadata
         self.outputs = self.get(url=self.url_measurements)
+
+        # receive available forecast point names and metadata
         self.forecast_params = self.get(url=self.url_forecast_points)
         self.forecast_names = list(self.forecast_params.keys())
 
@@ -79,7 +86,16 @@ class BopTest(System):
             scenario:               dict = None,
             active_control_layers:  dict = None,
     ):
+        """
+        set up the system
+        if no scenario is given, given start_time and warmup_period are used to initialize the system
+        otherwise the system is initialized based on the scenario-parameters (predefined in BOPTEST framework)
 
+        :param start_time: start time in seconds
+        :param warmup_period: warmup period in seconds
+        :param scenario: time period scenario
+        :param active_control_layers: active control layers
+        """
         if start_time < 0:
             raise SimulationError('Please make sure the start time is greater or equal to zero.')
 
@@ -89,9 +105,13 @@ class BopTest(System):
         # initialization
         if scenario is None:
             init_params = {'start_time': start_time, 'warmup_period': warmup_period}
+
+            # returns <point name>: <value> at start time
             measurements = self.put(url=self.url_initialize, data=init_params)
         else:
+            # returns <point name>: <value> at start time
             measurements = self.put(url=self.url_scenario, data=scenario)['time_period']
+
         self.time = measurements['time'] + self.time_offset
 
         self.controls.clear()
@@ -104,10 +124,13 @@ class BopTest(System):
 
     @property
     def scenario(self):
+        """returns current electricity price and time period scenario"""
         return requests.get(url=urljoin(self.url, 'scenario')).json()
 
     def advance(self):
+        """Advance simulation one control step further"""
 
+        # returns <point name>: <value> at time at control step (end time of control step)
         self.measurements = self.post(url=self.url_advance, data=self.controls)
         try:
             self.time = self.measurements['time'] + self.time_offset
@@ -118,10 +141,15 @@ class BopTest(System):
         pass
 
     def read(self) -> dict:
+        """
+        returns readable measurements
+        including electricity prices which are obtained through forecast
+        """
 
         # the electricity prices are not contained in the measurements, so we have to access them through the forecast
         forecast = self.get_forecast(horizon_in_seconds=1)
-        columns_to_extract = ['PriceElectricPowerConstant', 'PriceElectricPowerDynamic', 'PriceElectricPowerHighlyDynamic']
+        columns_to_extract = ['PriceElectricPowerConstant', 'PriceElectricPowerDynamic',
+                              'PriceElectricPowerHighlyDynamic']
         forecast_dict = {column: forecast.at[0, column] for column in columns_to_extract}
         self.measurements.update(forecast_dict)
 
@@ -148,7 +176,10 @@ class BopTest(System):
         self.controls.update(control_dict)
 
     def _get_forecast(self, horizon_in_seconds: int) -> pd.DataFrame:
-
+        """
+        returns forecast points and values for a given horizon
+        forecast time corrected by time offset
+        """
         data = {'point_names': self.forecast_names, 'horizon': horizon_in_seconds, 'interval': self.step_size}
         response = self.put(self.url_forecast, data=data)
         forecast = pd.DataFrame(response)
@@ -158,6 +189,10 @@ class BopTest(System):
         return forecast
 
     def summary(self):
+        """
+        prints a summary of the BopTest system setup:
+        Scenario and tables of inputs (controls) and outputs (measurements) including metadata
+        """
 
         print('----------------------- BopTest Summary -----------------------')
         print(f'URL:        {self.url}')
@@ -180,7 +215,8 @@ class BopTest(System):
 
     def get_kpis(self):
         """
-        Get KPIs at the end of the Simulation
+        get KPIs at the end of the simulation
+        calculated from start time, not including warm up period
         :return:
         """
         return requests.get(url=urljoin(self.url, 'kpi')).json()['payload']
