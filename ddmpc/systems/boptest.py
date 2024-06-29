@@ -92,7 +92,7 @@ class BopTest(System):
         otherwise the system is initialized based on the scenario-parameters (predefined in BOPTEST framework)
 
         :param start_time: start time in seconds
-        :param warmup_period: warmup period in seconds
+        :param warmup_period: warmup period in seconds (warm up period not included in calculation of kpis)
         :param scenario: time period scenario
         :param active_control_layers: active control layers
         """
