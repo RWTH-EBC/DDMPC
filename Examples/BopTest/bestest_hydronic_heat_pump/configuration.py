@@ -143,6 +143,7 @@ def logistic(x):
 # Func can apply given function to u_hp
 u_hp_logistic = Connection(Func(base=u_hp, func=logistic, name="logistic"))
 
+# Create a model with all Features
 model = Model(*Feature.all)
 
 system = BopTest(
