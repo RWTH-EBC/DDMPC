@@ -153,6 +153,8 @@ system = BopTest(
     time_offset=time_offset,
 )
 
+# Define Training data for supervised machine learning (power_hp)
+# power of heat pump is controlled variable
 power_hp_TrainingData = TrainingData(
     inputs=Inputs(
         Input(source=u_hp, lag=1),
@@ -164,6 +166,8 @@ power_hp_TrainingData = TrainingData(
     step_size=one_minute * 15,
 )
 
+# Define Training data for supervised machine learning
+# Room air temperature is controlled variable
 TAirRoom_TrainingData = TrainingData(
     inputs=Inputs(
         Input(source=TAirRoom, lag=3),
@@ -175,7 +179,7 @@ TAirRoom_TrainingData = TrainingData(
     step_size=one_minute * 15,
 )
 
-
+# Define plot / plot appearance for PID
 pid_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
@@ -185,6 +189,7 @@ pid_plotter = Plotter(
     SubPlot(features=[costs_el], y_label="el. Costs in ct")
 )
 
+# Define plot / plot appearance for MPC
 mpc_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
@@ -195,6 +200,7 @@ mpc_plotter = Plotter(
     SubPlot(features=[price_el], y_label="el. price in €/kW")
 )
 
+# Define plot / plot appearance for MPC solution
 mpc_solution_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
