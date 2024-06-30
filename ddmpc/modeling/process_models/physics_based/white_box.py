@@ -20,6 +20,14 @@ class WhiteBox(Predictor):
             output_expression:  ca.MX,
             step_size:          int,
     ):
+        """
+        provides methods to obtain prediction via a casadi function as well as to test GPR
+
+        :param inputs: list of input sources (will be converted to features)
+        :param output: output feature / source
+        :param output_expression: prediction function (casadi)
+        :param step_size: step size of predictor
+        """
 
         # convert the features to Input's with a lag of one
         inputs = Inputs(
