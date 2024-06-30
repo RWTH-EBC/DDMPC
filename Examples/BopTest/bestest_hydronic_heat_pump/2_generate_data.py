@@ -38,4 +38,5 @@ dh = DataHandler(
 # plots generated data of PID in the way defined in configuration.py
 pid_plotter.plot(df=dc_random.df, show_plot=True, save_plot=True, save_name=f'{name}.png')
 
+# saves DataHandler to pickle (directory: /stored_data/data/ )
 dh.save(name, override=True)

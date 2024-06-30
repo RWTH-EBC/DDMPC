@@ -50,6 +50,7 @@ class TunerDense(TunerLayer):
 
 
 class TunerBatchNormalizing(TunerLayer):
+    """provides method for batch normalization"""
 
     def __init__(self, axis: int = 1, optional: bool = False):
 
@@ -115,7 +116,7 @@ class TunerModel:
 
     @property
     def min_layers(self):
-        return len([layer for layer in self.layers if layer.optional == False])
+        return len([layer for layer in self.layers if not layer.optional])
 
     def build_sequential(self, name: str = None) -> Sequential:
 
@@ -144,7 +145,6 @@ class TunerModel:
 
         # compile the model
         keras_model.compile(optimizer=self.optimizer, loss=self.loss)
-
 
         return keras_model
 

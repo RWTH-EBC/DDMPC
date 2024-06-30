@@ -153,7 +153,7 @@ system = BopTest(
     time_offset=time_offset,
 )
 
-# Define Training data for supervised machine learning (power_hp)
+# Define training data for supervised machine learning (power_hp)
 # power of heat pump is controlled variable
 power_hp_TrainingData = TrainingData(
     inputs=Inputs(
@@ -166,7 +166,7 @@ power_hp_TrainingData = TrainingData(
     step_size=one_minute * 15,
 )
 
-# Define Training data for supervised machine learning
+# Define training data for supervised machine learning
 # Room air temperature is controlled variable
 TAirRoom_TrainingData = TrainingData(
     inputs=Inputs(
