@@ -28,7 +28,7 @@ system.setup(
 # runs the system for the given duration using the given controller
 # duration has to be dividable by step size of the System
 # returns data frame (only current and not past data frames) in a DataContainer
-dc_random = system.run(controllers=[HP_PID], duration=one_day * 2)  # TODO: change back to 14
+dc_random = system.run(controllers=[HP_PID], duration=one_day * 14)
 dh = DataHandler(
     [
         dc_random

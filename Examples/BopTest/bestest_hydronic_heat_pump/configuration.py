@@ -149,7 +149,7 @@ model = Model(*Feature.all)
 system = BopTest(
     model=model,
     step_size=one_minute * 15,              # time between control steps
-    url="http://134.130.166.203:5000/",     # url of server with BOPTEST framework TODO: reset
+    url="http://127.0.0.1:5000/",     # url of server with BOPTEST framework
     time_offset=time_offset,
 )
 
