@@ -193,7 +193,7 @@ class NetworkTrainer:
         return self.neural_networks[0]
 
     def build(self, n: int, keras_tuner: TunerModel):
-        """ Builds n random Sequential Keras models """
+        """ Builds n random sequential Keras models and stores them to self.neural_networks """
 
         for i in range(n):
             neural_network = NeuralNetwork()
@@ -206,7 +206,7 @@ class NetworkTrainer:
         print()
 
     def fit(self, training_data: TrainingData, **kwargs):
-        """ trains all sequential Keras models that are stored in neural_networks """
+        """ trains all sequential Keras models that are stored in self.neural_networks """
 
         assert len(self.neural_networks) != 0, 'Make sure to call build() first.'
 
@@ -303,7 +303,7 @@ class NetworkTrainer:
         val = input('Enter the index of best ann:')
         try:
             idx = int(val)
-        except:
+        except (TypeError, ValueError):
             print('This is not an integer:', val)
             idx = self.choose_ann(training_data=training_data)
 
@@ -314,7 +314,10 @@ class NetworkTrainer:
             self.choose_ann(training_data=training_data)
 
     def save(self, filename: str, folder: str = None, override: bool = False):
-        """ saves all neural networks to the disc """
+        """
+        saves all neural networks to the disc
+        path: [FileManager.base]/predictors/[folder]
+        """
 
         for neural_network in self.neural_networks:
 
@@ -360,4 +363,3 @@ def load_NeuralNetwork(filename: str, folder: str = None) -> NeuralNetwork:
     neural_network.load_sequential(folder=folder)
 
     return neural_network
-

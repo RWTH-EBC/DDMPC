@@ -12,8 +12,8 @@ class Change(Constructed):
 
     def __init__(
             self,
-            base: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            base: Union[Source, Feature],   # either Source or Feature
+            plt_opts: Union[PlotOptions, None] = None,  # Union [X, None] equals Optional[X]
     ):
 
         if isinstance(base, Feature):
@@ -35,7 +35,10 @@ class Change(Constructed):
         return [self.base]
 
     def update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
-
+        """
+        Calculates the difference between the current and previous time step (based on idx) and writes it to
+        the current row in the dataframe df
+        """
         if idx <= 1:
             return df
 
@@ -441,12 +444,17 @@ class Subtraction(Constructed):
 
 
 class Product(Constructed):
+    """
+    Provides methods to calculate the scaled product of both given Sources / Features
+    at a special index or for all rows in df.
+    col_name is Product([name of base 1] * [name of base 2])
+    """
 
     def __init__(
             self,
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
-            scale: float =1,
+            scale: float = 1,
             plt_opts: Union[PlotOptions, None] = None,
     ):
 
@@ -461,7 +469,7 @@ class Product(Constructed):
 
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({b1.name} * {b2.name})',
+            name=f'{self.__class__.__name__}({b1.name} * {b2.name})',       # col_name
             plt_opts=plt_opts,
         )
         self.scale = scale
@@ -473,14 +481,24 @@ class Product(Constructed):
         return [self.b1, self.b2]
 
     def update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+        """
+        Calculates the scaled product of both Sources' / Features' values at a single time step (one row)
+        Write result to df
+        """
 
+        # get current row from index
         row = df.index[idx]
 
+        # get values of both features at given index and multiply and scale them, write result to df
         df.loc[row, self.col_name] = float(df.loc[row, self.b1.col_name] * df.loc[row, self.b2.col_name])*self.scale
 
         return df
 
     def process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculates the scaled product of both Sources' / Features' values at all time steps (all rows in df)
+        Write result to df
+        """
 
         df[self.col_name] = df[self.b1.col_name] * df[self.b2.col_name]*self.scale
 
@@ -624,7 +642,9 @@ class TimeFunc(Constructed):
 
 
 class Func(Constructed):
-
+    """
+    col name is Func([name])
+    """
     def __init__(
             self,
             name: str,
@@ -652,13 +672,20 @@ class Func(Constructed):
         return [self.base]
 
     def update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
-
+        """
+        apply given function on value of given base at single time step only (one row)
+        write result to df
+        """
         row = df.index[idx]
         df.loc[row, self.col_name] = self.func(df.loc[row, self.base.col_name])
 
         return df
 
     def process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        apply given function on value of given base at all time steps (all rows)
+        write result to df
+        """
 
         df[self.col_name] = df[self.base.col_name].apply(self.func)
 

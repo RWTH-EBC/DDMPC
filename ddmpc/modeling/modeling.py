@@ -3,9 +3,19 @@ from ddmpc.modeling.features import *
 
 
 class Model:
+    """
+    provides methods to
+        - validate the model
+        - print a summary of the model
+        - update features at a single time step
+        - update features at all time steps
+    """
 
     def __init__(self, *features: Feature):
-
+        """
+        When model is instantiated, the features are sorted in a way that all subs are sorted with their parents
+        Furthermore, the model is validated.
+        """
         self.features = features
 
         self._sort()
@@ -31,6 +41,11 @@ class Model:
         return self._source_mapping[source]
 
     def summary(self):
+        """
+        prints a summary of the model.
+        Tables of Controlled, Controls, Disturbances, Connection and Tracking objects
+        each displayed with its key attributes (e.g. name, subs, mode, bounds)
+        """
 
         print(f'{fmt.BOLD}Model Summary:{fmt.ENDC}')
         rows = [['Controlled  ', 'name', 'subs', 'mode']]
@@ -61,7 +76,7 @@ class Model:
 
         rows.append([''])
 
-        rows.append(['Ignonred', 'name', 'subs'])
+        rows.append(['Ignored', 'name', 'subs'])
 
         for f in self.ignored:
             rows.append(['', f.source.name, f.source.subs])
@@ -126,34 +141,41 @@ class Model:
 
     @property
     def controlled(self) -> list[Controlled]:
+        """returns a list of all Controlled objects in features"""
         return [f for f in self.features if isinstance(f, Controlled)]
 
     @property
     def controls(self) -> list[Control]:
+        """returns a list of all Control objects in features"""
         return [f for f in self.features if isinstance(f, Control)]
 
     @property
     def disturbances(self) -> list[Disturbance]:
+        """returns a list of all Disturbance objects in features"""
         return [f for f in self.features if isinstance(f, Disturbance)]
 
     @property
     def connecting(self) -> list[Connection]:
+        """returns a list of all Connection objects in features"""
         return [f for f in self.features if isinstance(f, Connection)]
 
     @property
     def ignored(self) -> list[Tracking]:
+        """returns a list of all Tracking objects in features"""
         return [f for f in self.features if isinstance(f, Tracking)]
 
     @property
     def constructed(self) -> list[Constructed]:
+        """returns a list of all objects in features that have a Constructed object as a source"""
         return [f.source for f in self.features if isinstance(f.source, Constructed)]
 
     @property
     def readable(self) -> list[Readable]:
+        """returns a list of all objects in features that have a Readable object as a source"""
         return [f.source for f in self.features if isinstance(f.source, Readable)]
 
     def update(self, idx: int, df: pd.DataFrame, inplace: bool = True) -> pd.DataFrame:
-
+        """updates every feature of the model at a given index (row) and writes result to df"""
         for feature in self.features:
 
             df = feature.update(df=df, idx=idx, inplace=inplace)
@@ -161,9 +183,8 @@ class Model:
         return df
 
     def process(self, df: pd.DataFrame, inplace: bool = True) -> pd.DataFrame:
-
+        """updates every feature of the model (all rows) and writes result to df"""
         for feature in self.features:
             df = feature.process(df=df, inplace=inplace)
 
         return df
-

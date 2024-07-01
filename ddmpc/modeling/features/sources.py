@@ -61,7 +61,7 @@ class Source(ABC):
     def __eq__(self, other):
         """returns True if the name of the Feature is equal to the name of the other Feature"""
 
-        assert isinstance(other, Source), f"Comarison of {other} and {self} went wrong."
+        assert isinstance(other, Source), f"Comparison of {other} and {self} went wrong."
 
         return object and hash(self) == hash(other)
 
@@ -174,12 +174,18 @@ class Source(ABC):
 
 
 class Readable(Source):
+
     def __init__(
         self,
         name: str,
         read_name: str,
         plt_opts: PlotOptions,
     ):
+        """
+        :param name: colloquial name of instance
+        :param read_name: name in BOPTEST framework, also used as column name in df
+        :param plt_opts: plot options for instance (line color, line style, label)
+        """
         super(Readable, self).__init__(name=name, plt_opts=plt_opts)
 
         self.read_name: str = read_name
@@ -222,7 +228,7 @@ class Constructed(Source, ABC):
     @property
     @abstractmethod
     def subs(self) -> list[Source]:
-        """Returns a list with all Source's that are required to calculate this Source"""
+        """Returns a list with all Sources that are required to calculate this Source"""
         pass
 
     @abstractmethod

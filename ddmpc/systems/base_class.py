@@ -188,21 +188,22 @@ class System(abc.ABC):
                     if self.time % controller.step_size == 0:
 
                         # calculate the controls
+                        # call of controller returns dict with control actions
                         controls, additional_columns = controller(df.loc[df.index <= idx])
 
                         # write controls to the system
                         self.write(controls)
 
-                        # update current row by controls
+                        # update current row with control action calculated by controller
                         update(controls)
 
                         # update the additional columns as Predictions or solver call times
                         update(additional_columns)
 
-                # update
+                # update model at current index
                 self.model.update(df=df, idx=idx, inplace=True)
 
-            # advance simulation
+            # advance simulation to next time step
             self.advance()
 
         # ------------------ simulation loop ------------------
@@ -210,8 +211,7 @@ class System(abc.ABC):
         # last df
         self.previous_df = df[skip_rows:].copy(deep=True)
 
-        # create DataContainer
+        # create DataContainer (only with current and not past data frames)
         dc = DataContainer(df=df[skip_rows:])
 
         return dc
-

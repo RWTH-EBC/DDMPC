@@ -269,7 +269,10 @@ class DataHandler:
             dc.plot(plotter)
 
     def save(self, filename: str, folder: str = None, override: bool = False):
-
+        """
+        saves DataHandler object to pickle file
+        path: [FileManager.base]/[FileManager.experiment]/[folder]
+        """
         if folder is not None:
             directory = str(Path(file_manager.experiment_dir(), folder))
         else:
