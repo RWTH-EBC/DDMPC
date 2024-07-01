@@ -40,7 +40,7 @@ hhp_MPC = ModelPredictive(
     ),
     forecast_callback=system.get_forecast,
     solution_plotter=mpc_solution_plotter,
-    show_solution_plot=False,
+    show_solution_plot=True,
     save_solution_plot=False,
     save_solution_data=True,
 )

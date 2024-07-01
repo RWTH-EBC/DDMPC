@@ -5,7 +5,6 @@ This script is used to define the system,
 the relevant variables and what to plot during simulation
 """
 
-
 """ Define the features (Variables) of your system """
 TAirRoom = Controlled(  # The room temperature should be controlled
     source=Readable(
@@ -13,7 +12,7 @@ TAirRoom = Controlled(  # The room temperature should be controlled
         read_name="TAirRoom",  # name of datapoint or FMU variable
         plt_opts=red_line,  # here some customization for plotting
     ),
-    mode=Random(),  # Control mode (defines boundaries and control goal etc
+    mode=Identification(),  # Control mode (defines boundaries and control goal etc
 )
 TAirRoom_change = Connection(
     Change(base=TAirRoom)
@@ -111,7 +110,6 @@ Q_flowAhu = Controlled(
     EnergyBalance(name="AHU EnergyBalance", heat_flows=[heat_flow_cold, heat_flow_hot]),
     mode=Steady(day_target=0, night_target=0),
 )
-
 
 Q_flowTabs = Control(
     Readable(
