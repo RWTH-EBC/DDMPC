@@ -49,7 +49,7 @@ u_hp = Control(
     lb=0,                                       # not working
     ub=1,                                       # working at maximum capacity
     default=0,
-    cutoff=0.1,                                 # TODO: What does cutoff mean?
+    cutoff=0.1,                                 # everything below cutoff results in signal 0 due to minimal rotational speed of hp
 )
 
 # creates direct radiation [W/m^2] as Disturbance based on forecast given through BOPTEST framework
