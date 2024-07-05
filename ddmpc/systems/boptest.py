@@ -1,5 +1,3 @@
-import typing
-
 import pandas as pd
 
 import ddmpc.utils.formatting
@@ -8,6 +6,8 @@ from ddmpc.systems import System
 from ddmpc.systems.exceptions import ReadingError, SimulationError
 from urllib.parse import urljoin
 import requests
+import warnings
+from typing import Optional
 
 
 class BopTest(System):
@@ -41,7 +41,7 @@ class BopTest(System):
         self.url_forecast:          str = urljoin(url, url='forecast')
         self.url_forecast_points:   str = urljoin(url, url='forecast_points')
 
-        self.measurements: typing.Optional[dict] = None
+        self.measurements: Optional[dict] = None
         self.controls: dict = dict()
 
         # receive available control signal input point names and metadata
@@ -81,9 +81,9 @@ class BopTest(System):
 
     def setup(
             self,
-            start_time:             int,
-            warmup_period:          int = 0,
-            scenario:               dict = None,
+            start_time:             Optional[int] = None,
+            warmup_period:          Optional[int] = None,
+            scenario:               Optional[dict] = None,
             active_control_layers:  dict = None,
     ):
         """
@@ -91,24 +91,40 @@ class BopTest(System):
         if no scenario is given, given start_time and warmup_period are used to initialize the system
         otherwise the system is initialized based on the scenario-parameters (predefined in BOPTEST framework)
 
+        EITHER start_time and warmup_period OR scenario have to be given!
+
         :param start_time: start time in seconds
         :param warmup_period: warmup period in seconds (warm up period not included in calculation of kpis)
         :param scenario: time period scenario
         :param active_control_layers: active control layers
         """
-        if start_time < 0:
-            raise SimulationError('Please make sure the start time is greater or equal to zero.')
 
         # set step size
         self.put(url=self.url_step, data={'step': self.step_size})
 
         # initialization
         if scenario is None:
+
+            # check if requirements fulfilled: Either start_time and warmup_period or scenario have to be given
+            # and start_time has to be positive
+            assert start_time is not None, "if no scenario is given, start_time must be given!"
+            assert warmup_period is not None, "if no scenario is given, warmup_period must be given!"
+            if start_time < 0:
+                raise SimulationError('Please make sure the start time is greater or equal to zero.')
+
             init_params = {'start_time': start_time, 'warmup_period': warmup_period}
 
             # returns <point name>: <value> at start time
             measurements = self.put(url=self.url_initialize, data=init_params)
+
         else:
+            if start_time is not None:
+                warnings.warn("there should be no start_time given when giving scenario"
+                              "because the given start_time won't be used but is predefined in scenario!")
+            if warmup_period is not None:
+                warnings.warn("there should be no warmup_period given when giving scenario"
+                              "because the given warmup_period won't be used but is predefined in scenario!")
+            
             # returns <point name>: <value> at start time
             measurements = self.put(url=self.url_scenario, data=scenario)['time_period']
 
