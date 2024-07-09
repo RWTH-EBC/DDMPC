@@ -73,9 +73,15 @@ class PID(Controller):
         self.logger: logging.Logger = logging.Logger(prefix=str(self), level=log_level)
 
     def __str__(self):
+        """
+        function returns the string representation of the PID controller: PID - [name of controlled] controlled by [name of control]
+        """
         return f'{self.__class__.__name__} - {self.y} controlled by {self.u}'
 
     def __repr__(self):
+        """
+        function returns the string representation of the PID controller: PID
+        """
         return f'{self.__class__.__name__}'
 
     def __call__(self, df: pd.DataFrame = None) -> tuple[dict, dict]:

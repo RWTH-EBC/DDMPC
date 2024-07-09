@@ -56,12 +56,14 @@ class Input(Node):
         super(Input, self).__init__(source=source)
 
     def __str__(self):
+        """returns Input([source.__str__()] - lag: [lag value])"""
         return f'Input({self.source.__str__()} - lag: {self.lag})'
 
     def __repr__(self):
         return f'Input({self.source.__repr__()} - lag: {self.lag})'
 
-    def col_name(self, k: int):
+    def col_name(self, k: int) -> str:
+        """returns Input([name of source]_[-k])"""
         return f'Input({self.source.name}_{-k})'
 
 
@@ -92,6 +94,7 @@ class Inputs:
         return item in self.values
 
     def __str__(self) -> str:
+        """returns Inputs([list of every Input])"""
         return f'{self.__class__.__name__}({self.values})'
 
     def __repr__(self) -> str:
@@ -136,11 +139,12 @@ class Output(Node):
 
         super(Output, self).__init__(source=source)
 
-    def col_name(self):
+    def col_name(self) -> str:
+        """returns Output([name of source])"""
         return f'Output({self.source})'
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.col_name()
 
 
