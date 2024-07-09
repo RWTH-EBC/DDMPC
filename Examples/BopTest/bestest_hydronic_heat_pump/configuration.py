@@ -1,5 +1,10 @@
 from ddmpc import *
 
+"""
+This script is used to define the system, 
+the relevant variables and what to plot during simulation
+"""
+
 time_offset = 1546300800    # unix time stamp: time offset to set the date to 01.01.2019 (0 is 01.01.1970)
 
 # different modes for room air temperature
@@ -8,6 +13,7 @@ TAirRoom_random = Random(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, 
                          interval=3600 * 6)
 TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15)
 
+""" Define the features (Variables) of your system """
 # creates room temperature [K] as Controlled object, later used in optimization function
 # an output given through BOPTEST framework is used as source
 # mode set as steady
@@ -38,6 +44,7 @@ t_amb = Disturbance(
 )
 
 # creates heat pump modulating signal [1] as Control object
+# control variables are manipulated by the controller
 # read name and documentation (e.g. configuration boundaries) given in BOPTEST framework on
 # https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 u_hp = Control(
@@ -69,7 +76,7 @@ t_amb_change = Connection(Change(base=t_amb))
 rad_dir_change = Connection(Change(base=rad_dir))
 
 # creates power of fan [W] as Tracking object
-# Tracking objects only used to "measure" further variables
+# Tracking objects only used to "measure" further variables / for evaluation purpose
 # read name and documentation given in BOPTEST framework on
 # https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 power_fan = Tracking(
@@ -93,7 +100,7 @@ power_hp = Controlled(
 )
 
 # creates power of emission circuit pump [W] as Tracking object
-# Tracking objects only used to "measure" further variables
+# Tracking objects only used to "measure" further variables / for evaluation purpose
 # read name and documentation given in BOPTEST framework on
 # https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 power_ec = Tracking(
@@ -105,7 +112,7 @@ power_ec = Tracking(
 )
 
 # creates evaporator fan signal [1] as Tracking object
-# Tracking objects only used to "measure" further variables
+# Tracking objects only used to "measure" further variables / for evaluation purpose
 # read name and documentation given in BOPTEST framework on
 # https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 u_fan = Tracking(

@@ -5,41 +5,72 @@ This script is used to define the system,
 the relevant variables and what to plot during simulation
 """
 
+time_offset = 1672527600    # unix time stamp: time offset to set the date to 01.01.2023 (0 is 01.01.1970)
+
 """ Define the features (Variables) of your system """
+# creates room temperature [K] as Controlled object, later used in optimization function
+# source is readable datapoint / FMU variable
+# mode set as Identification (random sequence of targets within bounds with random intervals between targets)
 TAirRoom = Controlled(  # The room temperature should be controlled
     source=Readable(
-        name="Room Temperature",  # internal name
-        read_name="TAirRoom",  # name of datapoint or FMU variable
-        plt_opts=red_line,  # here some customization for plotting
+        name="Room Temperature",        # colloquial name
+        read_name="TAirRoom",           # name of datapoint or FMU variable
+        plt_opts=red_line,              # here some customization for plotting
     ),
-    mode=Identification(),  # Control mode (defines boundaries and control goal etc
-)
-TAirRoom_change = Connection(
-    Change(base=TAirRoom)
-)  # we want to predict the temperature change
-
-Q_flowCold = Tracking(  # Tracked variables for evaluation purpose
-    Readable(name="HeatFlow Cold", read_name="QFlowCold", plt_opts=blue_line)
+    mode=Identification(),  # Control mode (defines boundaries, targets and time interval between targets)
 )
 
+# Change can calculate the change of in this case the room temperature between the current and the previous time step
+TAirRoom_change = Connection(Change(base=TAirRoom))
+
+# creates cold heat flow [W] as Tracking object
+# Tracking objects only used to "measure" further variables / for evaluation purpose
+# source is readable datapoint / FMU variable
+Q_flowCold = Tracking(
+    Readable(
+        name="HeatFlow Cold",           # colloquial name
+        read_name="QFlowCold",          # name of datapoint or FMU variable
+        plt_opts=blue_line,             # here some customization for plotting
+    )
+)
+
+# creates hot heat flow [W] as Tracking object
+# Tracking objects only used to "measure" further variables / for evaluation purpose
+# source is readable datapoint / FMU variable
 Q_flowHot = Tracking(
-    Readable(name="HeatFlow Hot", read_name="QFlowHeat", plt_opts=red_line)
+    Readable(
+        name="HeatFlow Hot",            # colloquial name
+        read_name="QFlowHeat",          # name of datapoint or FMU variable
+        plt_opts=red_line,              # here some customization for plotting
+    )
 )
+
+# creates air temperature (input for AHU) [K] as Tracking object
+# Tracking objects only used to "measure" further variables / for evaluation purpose
+# source is readable datapoint / FMU variable
 TAirIn = Tracking(
-    Readable(name="AHU Measured", read_name="Bus.ahuBus.TSupAirMea", plt_opts=red_line)
+    Readable(
+        name="AHU Measured",                # colloquial name
+        read_name="Bus.ahuBus.TSupAirMea",  # name of datapoint or FMU variable
+        plt_opts=red_line,                  # here some customization for plotting
+    )
 )
 
-TsetAHU = Control(  # control variables are manipulated by the controller
+# creates AHU set point temperature [K] as Control object
+# control variables are manipulated by the controller
+# source is readable datapoint / FMU variable
+TsetAHU = Control(
     source=Readable(
-        name="AHU SetPoint",
-        read_name="TAhuSet",
-        plt_opts=red_line,
+        name="AHU SetPoint",                # colloquial name
+        read_name="TAhuSet",                # name of datapoint or FMU variable
+        plt_opts=red_line,                  # here some customization for plotting
     ),
-    lb=273.15 + 17,
-    ub=273.15 + 28,
-    default=273.15 + 22,  # without controller the default value is active
+    lb=273.15 + 17,                         # lower bound
+    ub=273.15 + 28,                         # upper bound
+    default=273.15 + 22,                    # without controller the default value is active
 )
 
+# Change can calculate the change between the current and the previous time step
 TsetAHU_change = Connection(
     Change(base=TsetAHU)
 )  # later we want to penalize the change to prevent oscillations
@@ -111,6 +142,7 @@ Q_flowAhu = Controlled(
     mode=Steady(day_target=0, night_target=0),
 )
 
+# control variables are manipulated by the controller
 Q_flowTabs = Control(
     Readable(
         name="Heat Flow SetPoint",
@@ -160,7 +192,7 @@ weekly_cos = Disturbance(TimeFunc(name="weekly_cos", func=cos_w))
 """ Define the controlled system """
 model = Model(*Feature.all)  # pass all features to the model
 system = FMU(
-    model=model, step_size=60 * 15, name="ashrae140_900_set_point_fmu.fmu", time_offset=1672527600,
+    model=model, step_size=60 * 15, name="ashrae140_900_set_point_fmu.fmu", time_offset=time_offset,
 )  # initialize system
 
 """ Define the Inputs and Outputs of the
