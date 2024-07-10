@@ -621,7 +621,7 @@ class NLP:
                             NLPConstraint(nlp_value.mx - lb.mx + lb_eps.mx, 0, inf)
                         )
                         self._constraints.append(
-                            NLPConstraint(nlp_value.mx - ub.mx + ub_eps.mx, -inf, 0)
+                            NLPConstraint(nlp_value.mx - ub.mx - ub_eps.mx, -inf, 0)
                         )
 
                         # objective
@@ -635,14 +635,28 @@ class NLP:
 
                     elif isinstance(feature.mode, Steady):
 
+                        eps1 = NLPEpsilon(feature=feature, k=k)
+                        eps2 = NLPEpsilon(feature=feature, k=k)
+                        self._opt_vars.append(eps1)
+                        self._opt_vars.append(eps2)
+
                         target = NLPTarget(feature=feature, k=k)
                         self._par_vars.append(target)
 
-                        # objective
-                        self._objectives.append(
-                            NLPObjective(objective(nlp_value.mx - target.mx))
+                        self._constraints.append(
+                            NLPConstraint(nlp_value.mx - target.mx + eps1.mx, 0, inf)
+                        )
+                        self._constraints.append(
+                            NLPConstraint(nlp_value.mx - target.mx - eps2.mx, -inf, 0)
                         )
 
+                        # objective
+                        self._objectives.append(
+                            NLPObjective(objective(eps1.mx))
+                        )
+                        self._objectives.append(
+                            NLPObjective(objective(ub_eps2.mx))
+                        )
                     else:
                         raise NotImplementedError(f'Mode {feature.mode} is not implemented yet '
                                                   f'for Objective {objective}.')
