@@ -14,7 +14,7 @@ time_offset = 1672527600    # unix time stamp: time offset to set the date to 01
 TAirRoom = Controlled(  # The room temperature should be controlled
     source=Readable(
         name="Room Temperature",        # colloquial name
-        read_name="TAirRoom",           # name of datapoint or FMU variable
+        read_name="TAirRoom",           # column name in df / name of datapoint or FMU variable
         plt_opts=red_line,              # here some customization for plotting
     ),
     mode=Identification(),  # Control mode (defines boundaries, targets and time interval between targets)
@@ -29,7 +29,7 @@ TAirRoom_change = Connection(Change(base=TAirRoom))
 Q_flowCold = Tracking(
     Readable(
         name="HeatFlow Cold",           # colloquial name
-        read_name="QFlowCold",          # name of datapoint or FMU variable
+        read_name="QFlowCold",          # column name in df / name of datapoint or FMU variable
         plt_opts=blue_line,             # here some customization for plotting
     )
 )
@@ -40,7 +40,7 @@ Q_flowCold = Tracking(
 Q_flowHot = Tracking(
     Readable(
         name="HeatFlow Hot",            # colloquial name
-        read_name="QFlowHeat",          # name of datapoint or FMU variable
+        read_name="QFlowHeat",          # column name in df / name of datapoint or FMU variable
         plt_opts=red_line,              # here some customization for plotting
     )
 )
@@ -51,7 +51,7 @@ Q_flowHot = Tracking(
 TAirIn = Tracking(
     Readable(
         name="AHU Measured",                # colloquial name
-        read_name="Bus.ahuBus.TSupAirMea",  # name of datapoint or FMU variable
+        read_name="Bus.ahuBus.TSupAirMea",  # column name in df / name of datapoint or FMU variable
         plt_opts=red_line,                  # here some customization for plotting
     )
 )
@@ -62,7 +62,7 @@ TAirIn = Tracking(
 TsetAHU = Control(
     source=Readable(
         name="AHU SetPoint",                # colloquial name
-        read_name="TAhuSet",                # name of datapoint or FMU variable
+        read_name="TAhuSet",                # column name in df / name of datapoint or FMU variable
         plt_opts=red_line,                  # here some customization for plotting
     ),
     lb=273.15 + 17,                         # lower bound
@@ -75,65 +75,74 @@ TsetAHU_change = Connection(
     Change(base=TsetAHU)
 )  # later we want to penalize the change to prevent oscillations
 
+# creates air temperatures t_1 to t_4 [K] as Tracking objects
+# Tracking objects only used to "measure" further variables / for evaluation purpose
+# source is readable datapoint / FMU variable
 t_1 = Tracking(
     Readable(
-        name="AHU in hot",
-        read_name="Bus.ahuBus.heaterBus.hydraulicBus.TFwrdInMea",
-        plt_opts=black_line,
+        name="AHU in hot",                                          # colloquial name
+        read_name="Bus.ahuBus.heaterBus.hydraulicBus.TFwrdInMea",   # column name in df / name of datapoint or FMU variable
+        plt_opts=black_line,                                        # here some customization for plotting
     )
 )
 t_2 = Tracking(
     Readable(
-        name="AHU out hot",
-        read_name="Bus.ahuBus.heaterBus.hydraulicBus.TRtrnOutMea",
-        plt_opts=black_line,
+        name="AHU out hot",                                         # colloquial name
+        read_name="Bus.ahuBus.heaterBus.hydraulicBus.TRtrnOutMea",  # column name in df / name of datapoint or FMU variable
+        plt_opts=black_line,                                        # here some customization for plotting
     )
 )
 t_3 = Tracking(
     Readable(
-        name="AHU in cold",
-        read_name="Bus.ahuBus.coolerBus.hydraulicBus.TFwrdInMea",
-        plt_opts=black_line,
+        name="AHU in cold",                                         # colloquial name
+        read_name="Bus.ahuBus.coolerBus.hydraulicBus.TFwrdInMea",   # column name in df / name of datapoint or FMU variable
+        plt_opts=black_line,                                        # here some customization for plotting
     )
 )
 t_4 = Tracking(
     Readable(
-        name="AHU out cold",
-        read_name="Bus.ahuBus.coolerBus.hydraulicBus.TRtrnOutMea",
-        plt_opts=black_line,
+        name="AHU out cold",                                        # colloquial name
+        read_name="Bus.ahuBus.coolerBus.hydraulicBus.TRtrnOutMea",  # column name in df / name of datapoint or FMU variable
+        plt_opts=black_line,                                        # here some customization for plotting
     )
 )
+
+# creates mass flows (hot and cold) [kg/s] as Tracking object
+# Tracking objects only used to "measure" further variables / for evaluation purpose
+# source is readable datapoint / FMU variable
 mass_flow_hot = Tracking(
     Readable(
-        name="AHU MassFlow Hot",
-        read_name="Bus.ahuBus.heaterBus.hydraulicBus.VFlowInMea",
-        plt_opts=red_line,
+        name="AHU MassFlow Hot",                                    # colloquial name
+        read_name="Bus.ahuBus.heaterBus.hydraulicBus.VFlowInMea",   # column name in df / name of datapoint or FMU variable
+        plt_opts=red_line,                                          # here some customization for plotting
     )
 )
 mass_flow_cold = Tracking(
     Readable(
-        name="AHU MassFlow Cold",
-        read_name="Bus.ahuBus.coolerBus.hydraulicBus.VFlowInMea",
-        plt_opts=blue_line,
+        name="AHU MassFlow Cold",                                   # colloquial name
+        read_name="Bus.ahuBus.coolerBus.hydraulicBus.VFlowInMea",   # column name in df / name of datapoint or FMU variable
+        plt_opts=blue_line,                                         # here some customization for plotting
     )
 )
 
+
+
 heat_flow_hot = Tracking(
     HeatFlow(
-        name="Heat Flow Hot",
+        name="Heat Flow Hot",                                       # column name in df
         mass_flow=mass_flow_hot,
         temperature_in=t_1,
         temperature_out=t_2,
-        plt_opts=red_line,
+        plt_opts=red_line,                                          # here some customization for plotting
     )
 )
 heat_flow_cold = Tracking(
     HeatFlow(
-        name="Heat Flow Cold",
+        name="Heat Flow Cold",                                      # column name in df
         mass_flow=mass_flow_cold,
         temperature_in=t_3,
         temperature_out=t_4,
-        plt_opts=blue_line,
+        plt_opts=blue_line,                                         # here some customization for plotting
     )
 )
 

@@ -229,7 +229,7 @@ class HeatFlow(Constructed):
 
     ):
 
-        # plot options
+        # set default plot options
         if plt_opts is None:
             plt_opts = PlotOptions(
                 color=fmt.green,

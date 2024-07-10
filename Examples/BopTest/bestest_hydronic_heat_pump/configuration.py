@@ -22,7 +22,7 @@ TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.
 TAirRoom = Controlled(
     source=Readable(
         name="TAir",                            # colloquial name
-        read_name="reaTZon_y",                  # zone operative temperature
+        read_name="reaTZon_y",                  # zone operative temperature; column name in df
         plt_opts=PlotOptions(color=red, line=line_solid),
     ),
     mode=TAirRoom_steady,
@@ -37,7 +37,7 @@ TAirRoom_change = Connection(Change(base=TAirRoom))
 t_amb = Disturbance(
     Readable(
         name="Ambient temperature",             # colloquial name
-        read_name="weaSta_reaWeaTDryBul_y",     # outside dry bulb temperature measurement
+        read_name="weaSta_reaWeaTDryBul_y",     # outside dry bulb temperature measurement; column name in df
         plt_opts=PlotOptions(color=blue, line=line_solid, label="Ambient Temperature"),
     ),
     forecast_name="TDryBul",                    # dry bulb temperature at ground level [K]
@@ -50,7 +50,7 @@ t_amb = Disturbance(
 u_hp = Control(
     source=Readable(
         name="u_hp",                            # colloquial name
-        read_name="oveHeaPumY_u",               # heat pump modulating signal for compressor speed
+        read_name="oveHeaPumY_u",               # heat pump modulating signal for compressor speed; column name in df
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_hp"),
     ),
     lb=0,                                       # not working
@@ -65,7 +65,7 @@ u_hp = Control(
 rad_dir = Disturbance(
     Readable(
         name="direct radiation",                # colloquial name
-        read_name="weaSta_reaWeaHDirNor_y",     # direct normal radiation measurement
+        read_name="weaSta_reaWeaHDirNor_y",     # direct normal radiation measurement; column name in df
         plt_opts=PlotOptions(color=light_red, line=line_solid, label="Radiation"),
     ),
     forecast_name="HDirNor",                    # direct normal radiation
@@ -82,7 +82,7 @@ rad_dir_change = Connection(Change(base=rad_dir))
 power_fan = Tracking(
     Readable(
         name="el. Power Fan",                   # colloquial name
-        read_name="reaPFan_y",                  # electrical power of the heat pump evaporator fan
+        read_name="reaPFan_y",                  # electrical power of the heat pump evaporator fan; column name in df
         plt_opts=PlotOptions(color=blue, line=line_dotted, label="P_fan"),
     )
 )
@@ -93,7 +93,7 @@ power_fan = Tracking(
 power_hp = Controlled(
     source=Readable(
         name="el. Power HP",                    # colloquial name
-        read_name="reaPHeaPum_y",               # heat pump electrical power
+        read_name="reaPHeaPum_y",               # heat pump electrical power; column name in df
         plt_opts=PlotOptions(color=red, line=line_solid, label="P_hp"),
     ),
     mode=Steady(day_target=0, night_target=0),  # power of heat pump should be as low as possible
@@ -106,7 +106,7 @@ power_hp = Controlled(
 power_ec = Tracking(
     Readable(
         name="el. Power emission circuit",      # colloquial name
-        read_name="reaPPumEmi_y",               # emission circuit pump electrical power
+        read_name="reaPPumEmi_y",               # emission circuit pump electrical power; column name in df
         plt_opts=PlotOptions(color=grey, line=line_dashdot, label="P_ec"),
     )
 )
@@ -118,7 +118,7 @@ power_ec = Tracking(
 u_fan = Tracking(
     source=Readable(
         name="u_fan",                           # colloquial name
-        read_name="oveFan_u",                   # signal to control the heat pump evaporator fan (either on or off)
+        read_name="oveFan_u",                   # signal to control the heat pump evaporator fan (either on or off); column name in df
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_fan"),
     ),
 )
@@ -133,7 +133,7 @@ u_fan_change = Tracking(Change(base=u_fan))
 price_el = Disturbance(
     Readable(
         name="el. Power Price",                 # colloquial name
-        read_name="PriceElectricPowerDynamic",  # Electricity price for a day / night tariff
+        read_name="PriceElectricPowerDynamic",  # Electricity price for a day / night tariff; column name in df
         plt_opts=PlotOptions(color=light_red, line=line_solid, label="Price"),
     ),
     forecast_name="PriceElectricPowerDynamic",
