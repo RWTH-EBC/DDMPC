@@ -1,104 +1,138 @@
 from ddmpc import *
 
-time_offset = 1546300800
+time_offset = 1546300800    # unix time stamp: time offset to set the date to 01.01.2019 (0 is 01.01.1970)
 
+# different modes for room air temperature
 TAirRoom_steady = Steady(day_start=8, day_end=15, day_target=290.15, night_target=294.15)
 TAirRoom_random = Random(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15,
                          interval=3600 * 6)
 TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15)
 
+# creates room temperature [K] as Controlled object, later used in optimization function
+# an output given through BOPTEST framework is used as source
+# mode set as steady
+# read name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 TAirRoom = Controlled(
     source=Readable(
-        name="TAir",
-        read_name="reaTZon_y",
+        name="TAir",                            # colloquial name
+        read_name="reaTZon_y",                  # zone operative temperature
         plt_opts=PlotOptions(color=red, line=line_solid),
     ),
     mode=TAirRoom_steady,
 )
 
+# Change can calculate the change of in this case the room temperature between the current and the previous time step
 TAirRoom_change = Connection(Change(base=TAirRoom))
 
+# creates ambient temperature [K] as Disturbance based on forecast given through BOPTEST framework
+# read name, forecast name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 t_amb = Disturbance(
     Readable(
-        name="Ambient temperature",
-        read_name="weaSta_reaWeaTDryBul_y",
+        name="Ambient temperature",             # colloquial name
+        read_name="weaSta_reaWeaTDryBul_y",     # outside dry bulb temperature measurement
         plt_opts=PlotOptions(color=blue, line=line_solid, label="Ambient Temperature"),
     ),
-    forecast_name="TDryBul",
+    forecast_name="TDryBul",                    # dry bulb temperature at ground level [K]
 )
 
+# creates heat pump modulating signal [1] as Control object
+# read name and documentation (e.g. configuration boundaries) given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 u_hp = Control(
     source=Readable(
-        name="u_hp",
-        read_name="oveHeaPumY_u",
+        name="u_hp",                            # colloquial name
+        read_name="oveHeaPumY_u",               # heat pump modulating signal for compressor speed
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_hp"),
     ),
-    lb=0,
-    ub=1,
+    lb=0,                                       # not working
+    ub=1,                                       # working at maximum capacity
     default=0,
-    cutoff=0.1,
+    cutoff=0.1,                                 # everything below cutoff results in signal 0 due to minimal rotational speed of hp
 )
 
+# creates direct radiation [W/m^2] as Disturbance based on forecast given through BOPTEST framework
+# read name, forecast name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 rad_dir = Disturbance(
     Readable(
-        name="direct radiation",
-        read_name="weaSta_reaWeaHDirNor_y",
+        name="direct radiation",                # colloquial name
+        read_name="weaSta_reaWeaHDirNor_y",     # direct normal radiation measurement
         plt_opts=PlotOptions(color=light_red, line=line_solid, label="Radiation"),
     ),
-    forecast_name="HDirNor",
+    forecast_name="HDirNor",                    # direct normal radiation
 )
 
-
+# Change can calculate the change between the current and the previous time step
 t_amb_change = Connection(Change(base=t_amb))
 rad_dir_change = Connection(Change(base=rad_dir))
 
+# creates power of fan [W] as Tracking object
+# Tracking objects only used to "measure" further variables
+# read name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 power_fan = Tracking(
     Readable(
-        name="el. Power Fan",
-        read_name="reaPFan_y",
+        name="el. Power Fan",                   # colloquial name
+        read_name="reaPFan_y",                  # electrical power of the heat pump evaporator fan
         plt_opts=PlotOptions(color=blue, line=line_dotted, label="P_fan"),
     )
 )
 
+# creates power of heat pump [W] as Controlled object, later used in optimization function
+# read name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 power_hp = Controlled(
     source=Readable(
-        read_name="reaPHeaPum_y",
-        name="el. Power HP",
+        name="el. Power HP",                    # colloquial name
+        read_name="reaPHeaPum_y",               # heat pump electrical power
         plt_opts=PlotOptions(color=red, line=line_solid, label="P_hp"),
     ),
-    mode=Steady(day_target=0, night_target=0),
+    mode=Steady(day_target=0, night_target=0),  # power of heat pump should be as low as possible
 )
 
-
+# creates power of emission circuit pump [W] as Tracking object
+# Tracking objects only used to "measure" further variables
+# read name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 power_ec = Tracking(
     Readable(
-        name="el. Power emission circuit",
-        read_name="reaPPumEmi_y",
+        name="el. Power emission circuit",      # colloquial name
+        read_name="reaPPumEmi_y",               # emission circuit pump electrical power
         plt_opts=PlotOptions(color=grey, line=line_dashdot, label="P_ec"),
     )
 )
 
-
+# creates evaporator fan signal [1] as Tracking object
+# Tracking objects only used to "measure" further variables
+# read name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 u_fan = Tracking(
     source=Readable(
-        name="u_fan",
-        read_name="oveFan_u",
+        name="u_fan",                           # colloquial name
+        read_name="oveFan_u",                   # signal to control the heat pump evaporator fan (either on or off)
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_fan"),
     ),
 )
 
+# Change can calculate the change between the current and the previous time step
 u_hp_change = Connection(Change(base=u_hp))
 u_fan_change = Tracking(Change(base=u_fan))
 
+# creates electricity price [Euro/kWh] as Disturbance based on forecast given through BOPTEST framework
+# read name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 price_el = Disturbance(
     Readable(
-        name="el. Power Price",
-        read_name="PriceElectricPowerDynamic",
+        name="el. Power Price",                 # colloquial name
+        read_name="PriceElectricPowerDynamic",  # Electricity price for a day / night tariff
         plt_opts=PlotOptions(color=light_red, line=line_solid, label="Price"),
     ),
     forecast_name="PriceElectricPowerDynamic",
 )
 
+# Product can calculate the product between two values at a single or at every time step
 costs_el = Connection(Product(b1=price_el, b2=power_hp, scale=0.001))
 
 
@@ -106,17 +140,21 @@ def logistic(x):
     return 1 / (1 + np.exp(-(x - 0.01) * 500))
 
 
+# Func can apply given function to u_hp
 u_hp_logistic = Connection(Func(base=u_hp, func=logistic, name="logistic"))
 
+# Create a model with all Features
 model = Model(*Feature.all)
 
 system = BopTest(
     model=model,
-    step_size=one_minute * 15,
-    url="http://127.0.0.1:5000",
+    step_size=one_minute * 15,              # time between control steps
+    url="http://127.0.0.1:5000/",     # url of server with BOPTEST framework
     time_offset=time_offset,
 )
 
+# Define training data for supervised machine learning (power_hp)
+# power of heat pump is controlled variable
 power_hp_TrainingData = TrainingData(
     inputs=Inputs(
         Input(source=u_hp, lag=1),
@@ -128,6 +166,8 @@ power_hp_TrainingData = TrainingData(
     step_size=one_minute * 15,
 )
 
+# Define training data for supervised machine learning
+# Room air temperature is controlled variable
 TAirRoom_TrainingData = TrainingData(
     inputs=Inputs(
         Input(source=TAirRoom, lag=3),
@@ -139,7 +179,7 @@ TAirRoom_TrainingData = TrainingData(
     step_size=one_minute * 15,
 )
 
-
+# Define plot / plot appearance for PID
 pid_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
@@ -149,6 +189,7 @@ pid_plotter = Plotter(
     SubPlot(features=[costs_el], y_label="el. Costs in ct")
 )
 
+# Define plot / plot appearance for MPC
 mpc_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
@@ -159,6 +200,7 @@ mpc_plotter = Plotter(
     SubPlot(features=[price_el], y_label="el. price in €/kW")
 )
 
+# Define plot / plot appearance for MPC solution
 mpc_solution_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
