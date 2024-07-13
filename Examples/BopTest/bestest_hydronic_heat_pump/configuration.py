@@ -150,16 +150,20 @@ def logistic(x):
 # Func can apply given function to u_hp
 u_hp_logistic = Connection(Func(base=u_hp, func=logistic, name="logistic"))
 
-# Create a model with all Features
-model = Model(*Feature.all)
+
+""" Define the controlled system """
+model = Model(*Feature.all)         # Create a model and pass all Features to it
 
 system = BopTest(
     model=model,
     step_size=one_minute * 15,              # time between control steps
     url="http://127.0.0.1:5000/",     # url of server with BOPTEST framework
     time_offset=time_offset,
-)
+)  # initialize system
 
+
+""" Define the Inputs and Outputs of the
+ process models using the Training data class"""
 # Define training data for supervised machine learning (power_hp)
 # power of heat pump is controlled variable
 power_hp_TrainingData = TrainingData(
@@ -186,6 +190,8 @@ TAirRoom_TrainingData = TrainingData(
     step_size=one_minute * 15,
 )
 
+
+""" Define which quantities should be plotted """
 # Define plot / plot appearance for PID
 pid_plotter = Plotter(
     SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
