@@ -1,17 +1,20 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from keras.callbacks import EarlyStopping
 
-training_data_name = 'pid_data'
+"""
+Train an ANN to learn the Temperature change using the generated training data
+"""
 
 # load DataHandler from pickle file saved in 2_generate_data
+training_data_name = 'pid_data'
 pid_data = load_DataHandler(f'{training_data_name}')
 
-# add pid_data to training data previously defined in configuration
+# add training data to Training Data object instantiated in configuration
 # shuffle data and split into training, validation and testing sets
 # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
 TAirRoom_TrainingData.add(pid_data)
 TAirRoom_TrainingData.shuffle()
-TAirRoom_TrainingData.split(0.8, 0.1, 0.1)
+TAirRoom_TrainingData.split(trainShare=0.8, validShare=0.1, testShare=0.1)
 write_pkl(TAirRoom_TrainingData, 'TrainingData_TAir', FileManager.data_dir())
 
 # Create a sequential Tuner Model for hyperparameter tuning
@@ -22,11 +25,11 @@ tuner = TunerModel(
     name="TAirRoom"
 )
 
-# create Trainer and build n random neural networks based on above created tuner
+# create Trainer and build n random neural networks based on above created tuner with the defined configuration
 trainer = NetworkTrainer()
 trainer.build(n=1, keras_tuner=tuner)
 
-# train all neural networks build above
+# train all neural networks build above by passing training data and training parameters
 # print the configuration of the best network
 # evaluate the trained neural networks (printing, saving and plotting evaluation by default False)
 trainer.fit(
