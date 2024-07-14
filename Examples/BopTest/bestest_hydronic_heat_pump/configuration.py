@@ -8,6 +8,7 @@ the relevant variables and what to plot during simulation
 time_offset = 1546300800    # unix time stamp: time offset to set the date to 01.01.2019 (0 is 01.01.1970)
 
 # different modes for room air temperature
+# defines boundaries, targets and time interval between different targets / set points
 TAirRoom_steady = Steady(day_start=8, day_end=15, day_target=290.15, night_target=294.15)
 TAirRoom_random = Random(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15,
                          interval=3600 * 6)

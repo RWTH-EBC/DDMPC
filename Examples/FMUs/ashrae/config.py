@@ -7,6 +7,12 @@ the relevant variables and what to plot during simulation
 
 time_offset = 1672527600    # unix time stamp: time offset to set the date to 01.01.2023 (0 is 01.01.1970)
 
+# different modes for room air temperature
+# defines boundaries, targets and time interval between different targets / set points
+TAirRoom_random = Random(day_start=8, day_end=16, day_lb=273.15 + 19, night_lb=273.15 + 16, day_ub=273.15 + 21,
+                         night_ub=273.15 + 24, interval=60 * 60 * 4)
+TAirRoom_identification = Identification()
+
 """ Define the features (Variables) of your system """
 # creates room temperature [K] as Controlled object, later used in optimization function
 # source is readable datapoint / FMU variable
@@ -17,7 +23,7 @@ TAirRoom = Controlled(  # The room temperature should be controlled
         read_name="TAirRoom",           # column name in df / name of datapoint or FMU variable
         plt_opts=red_line,              # here some customization for plotting
     ),
-    mode=Identification(),  # Control mode (defines boundaries, targets and time interval between targets)
+    mode=TAirRoom_identification,
 )
 
 # Change can calculate the change of in this case the room temperature between the current and the previous time step
@@ -158,7 +164,7 @@ Q_flowAhu = Controlled(
     mode=Steady(day_target=0, night_target=0),
 )
 
-# creates AHU Heat flow set point [kW] as Control object
+# creates Concrete Core Activation (TABS) heat flow set point [kW] as Control object
 # control variables are manipulated by the controller
 # source is readable datapoint / FMU variable
 Q_flowTabs = Control(
