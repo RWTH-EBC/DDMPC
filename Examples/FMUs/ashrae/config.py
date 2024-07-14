@@ -271,7 +271,7 @@ Q_flowAhu_TrainingData = TrainingData(
 """ Define which quantities should be plotted """
 # Define plot / plot appearance for PID
 pid_plotter = Plotter(
-    SubPlot(features=[TAirRoom], y_label="Air Temperature", shift=273.15, legend=False),
+    SubPlot(features=[TAirRoom], y_label="Room Temperature", shift=273.15, legend=False),
     SubPlot(features=[Q_flowTabs], y_label="BKT SetPoint", step=True, legend=False),
     SubPlot(
         features=[TsetAHU],
@@ -285,9 +285,9 @@ pid_plotter = Plotter(
     SubPlot(features=[Q_flowAhu], y_label="AHU Q", step=True, legend=False),
 )
 
-# Define plot / plot appearance for MPC
-mpc_plotter = Plotter(
-    SubPlot(features=[TAirRoom], y_label="Air Temperature", shift=273.15, legend=False),
+# Define plot / plot appearance for MPC solution
+mpc_solution_plotter = Plotter(
+    SubPlot(features=[TAirRoom], y_label="Room Temperature", shift=273.15, legend=False),
     SubPlot(features=[Q_flowTabs], y_label="BKT SetPoint", step=True, legend=False),
     SubPlot(
         features=[TsetAHU],
