@@ -12,6 +12,8 @@ time_offset = 1672527600    # unix time stamp: time offset to set the date to 01
 TAirRoom_random = Random(day_start=8, day_end=16, day_lb=273.15 + 19, night_lb=273.15 + 16, day_ub=273.15 + 21,
                          night_ub=273.15 + 24, interval=60 * 60 * 4)
 TAirRoom_identification = Identification()
+TAirRoom_economic = Economic(day_start=8, day_end=18, day_lb=273.15 + 21, day_ub=273.15 + 23, night_lb=273.15 + 17,
+                             night_ub=273.15 + 28, weekend=True)
 
 """ Define the features (Variables) of your system """
 # creates room temperature [K] as Controlled object, later used in optimization function

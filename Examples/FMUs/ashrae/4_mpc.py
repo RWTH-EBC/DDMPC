@@ -14,15 +14,7 @@ TAirRoom_predictor: LinearRegression = load_LinearRegression("TAirRoom_linreg")
 Q_flowAhu_predictor: LinearRegression = load_LinearRegression("Q_flowAhu_linreg")
 
 """ Set the comfort boundaries """
-TAirRoom.mode = Economic(
-    day_start=8,  # Time to activate the daytime boundaries
-    day_end=18,  # Time to activate the nighttime boundaries
-    day_lb=273.15 + 21,
-    day_ub=273.15 + 23,
-    night_lb=273.15 + 17,
-    night_ub=273.15 + 28,
-    weekend=True,  # Considers the nighttime constraints for weekends if true
-)
+TAirRoom.mode = TAirRoom_economic
 
 """ Initialize Model Predictive Controller """
 ThermalZone_MPC = ModelPredictive(
