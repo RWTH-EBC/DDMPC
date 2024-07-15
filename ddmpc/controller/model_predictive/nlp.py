@@ -655,7 +655,7 @@ class NLP:
                             NLPObjective(objective(eps1.mx))
                         )
                         self._objectives.append(
-                            NLPObjective(objective(ub_eps2.mx))
+                            NLPObjective(objective(eps2.mx))
                         )
                     else:
                         raise NotImplementedError(f'Mode {feature.mode} is not implemented yet '
