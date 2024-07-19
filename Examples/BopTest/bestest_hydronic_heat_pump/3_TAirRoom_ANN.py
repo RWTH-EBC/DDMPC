@@ -36,11 +36,11 @@ trainer.fit(
     training_data=TAirRoom_TrainingData,
     epochs=1000,
     batch_size=100,                 # number of test samples propagated through the network at once
-    verbose=1,                      # defines how the progress of the training is shown terminal window
+    verbose=1,                      # defines how the progress of the training is shown in terminal window
     callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
 )
 trainer.best.sequential.summary()
 trainer.eval(training_data=TAirRoom_TrainingData, show_plot=True)
 
-# Saves trainer to pickle (directory: /stored_data/predictors/ )
+# Saves all neural networks to pickle (directory: /stored_data/predictors/ )
 trainer.save(filename="TAirRoom_ANN", override=True)
