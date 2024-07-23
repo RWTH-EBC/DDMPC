@@ -3,12 +3,14 @@ from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 mpc_name = 'test'
 scenario = 'peak_heat_day'
 
-# regression for TAirRoom
+""" Choose the process models """
+# # regression for TAirRoom
 # TAirRoom_pred: LinearRegression = load_LinearRegression(filename='TairRoom_linReg')
-# TAirRoom_ped: GaussianProcess = load_GaussianProcess(filename='TairRoom_GPR')
+# TAirRoom_pred: GaussianProcess = load_GaussianProcess(filename='TairRoom_GPR')
 
 # load best NN trained before from disc
 TAirRoom_pred: NeuralNetwork = load_NetworkTrainer(filename="TairRoom_ANN").best
+
 
 # Define white box model for power of heat pump
 power_hp_wb = WhiteBox(
@@ -27,7 +29,7 @@ power_hp_wb = WhiteBox(
 TAirRoom.mode = TAirRoom_economic                   # changes mode previously defined in configuration.py
 FileManager.experiment = f'{mpc_name}'              # changes path data will be saved to from now on
 
-# Define MPC
+""" Initialize Model Predictive Controller """
 hhp_MPC = ModelPredictive(
     step_size=one_minute * 15,              # step size of controller
     nlp=NLP(                                # non linear problem
@@ -72,16 +74,18 @@ solver_options = {
 
 df = None
 
+"""  Online learning loop """
 for repetition in range(14):        # for 14 days (standard period in BOPTEST to ensure comparability)
 
-    # build nonlinear problem
+    # build nonlinear problem with trained models
     # default algorithm: ipopt
     hhp_MPC.nlp.build(
-        solver_options=solver_options, predictors=[TAirRoom_pred, power_hp_wb]
+        solver_options=solver_options,
+        predictors=[TAirRoom_pred, power_hp_wb],
     )
 
-    # runs the system for the given duration using the given controller
-    # duration has to be dividable by step size of the System
+    # runs the system for the given duration using the given MPC controller
+    # duration has to be dividable by step size of the system
     # returns data frame (only current and not past data frames) in a DataContainer
     # plots data and saves plot to disk (directory: /stored_data/plots/[mpc_name]/ )
     online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)

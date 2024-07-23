@@ -223,13 +223,13 @@ class HeatFlow(Constructed):
             mass_flow:          Union[Source, Feature],
             temperature_in:     Union[Source, Feature],
             temperature_out:    Union[Source, Feature],
-            cp:                 float = 4.18,
-            den:                float = 1000,
+            cp:                 float = 4.18,   # water, [kJ/(kg*K)]
+            den:                float = 1000,   # water. [kg/m^3]
             plt_opts:           Union[PlotOptions, None] = None,
 
     ):
 
-        # plot options
+        # set default plot options
         if plt_opts is None:
             plt_opts = PlotOptions(
                 color=fmt.green,

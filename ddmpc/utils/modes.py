@@ -173,7 +173,8 @@ class Random(Mode):
     def target(self, time: int) -> float:
         """
         returns the control target at a given time
-        and returns a new target every [interval] seconds """
+        and returns a new target every [interval] seconds
+        """
 
         lb, ub = self.bounds(time)
 
@@ -209,7 +210,11 @@ class Random(Mode):
 
 
 class Identification(Mode):
-    """ random sequence of set points between bounds """
+    """
+    random sequence of set points between bounds in random intervals between bounds
+    day defined by day_start and day_end
+    different bounds for day and night
+    """
 
     def __init__(
             self,
@@ -225,6 +230,20 @@ class Identification(Mode):
             min_change: int = 1,
             max_change: int = 2,
     ):
+        """
+        random sequence of set points between given bounds in random intervals between given bounds
+
+        :param day_start: start time of day
+        :param day_end: end time of day
+        :param day_lb: lower bound for day (day_start until day_end)
+        :param night_lb: lower bound for night
+        :param day_ub: upper bound for day (day_start until day_end)
+        :param night_ub: upper bound for night
+        :param min_interval: minimum time interval between two randomly generated targets / set points
+        :param max_interval: maximum time interval between two randomly generated targets / set points
+        :min_change: minimum change (absolute) between two targets / set points
+        :max_change: maximum change (absolute) between two targets / set points
+        """
 
         super(Identification, self).__init__(day_start=day_start, day_end=day_end)
 
@@ -239,8 +258,8 @@ class Identification(Mode):
         self.min_change: int = min_change
         self.max_change: int = max_change
 
-        self.last_randomization: Optional[int] = None
-        self.current_target: Optional[int] = None
+        self.last_randomization: Optional[int] = None       # at initialization there hasn't been a randomization yet
+        self.current_target: Optional[int] = None           # at initialization there is no current target yet
 
     def error(self, value: float, time: int) -> float:
         """ Returns the control error """
@@ -248,7 +267,10 @@ class Identification(Mode):
         return self.target(time) - value
 
     def bounds(self, time: int) -> tuple[float, float]:
-        """ returns the lower and upper bound for a given time """
+        """
+        returns the lower and upper bound at a given time as tuple
+        returns day bounds only during weekdays, otherwise night bounds
+        """
 
         if self._weekend(time):
             return self.night_lb, self.night_ub
@@ -259,7 +281,11 @@ class Identification(Mode):
         return self.night_lb, self.night_ub
 
     def target(self, time: int) -> float:
-        """ returns the control target for a given time """
+        """
+        returns the control target at a given time
+        and returns a new target every [interval] seconds
+        interval differs randomly between min_interval and max_interval
+        """
 
         lb, ub = self.bounds(time)
 
@@ -270,27 +296,39 @@ class Identification(Mode):
             self.current_target = random.randint(int(lb), int(ub))
 
         def new_target():
+            """
+            returns a new target in K
+            randomly choosing if positive or negative change is applied whit respect to bounds
+            """
 
+            # min / max positive change with respect to upper bounds and min / max change
             max_pos_change = min(max(ub - self.current_target, 0), self.max_change)
             min_pos_change = min(max(ub - self.current_target, 0), self.min_change)
 
+            # min / max negative change with respect to lower bounds and min / max change
             max_neg_change = min(max(self.current_target - lb, 0), self.max_change)
             min_neg_change = min(max(self.current_target - lb, 0), self.min_change)
 
+            # choose pos / neg change randomly from determined intervals
             pos_change = random.uniform(a=min_pos_change, b=max_pos_change)
             neg_change = - random.uniform(a=min_neg_change, b=max_neg_change)
 
             if self.current_target + self.min_change > ub:
+                # if new target would be out of upper bound if min_change would be added to current target
                 c = neg_change
             elif self.current_target - self.min_change < lb:
+                # if new target would be out of lower bound if min_change would be subtracted to current target
                 c = pos_change
             else:
+                # else pick pos or neg change randomly
                 c = random.choice([pos_change, neg_change])
 
             target = self.current_target + c
 
             return target
 
+        # if the time [interval] passed since last randomization or there is no target yet or the target is not within
+        # bounds, generate a new interval and target and set current time as time of last randomization
         if time - self.last_randomization >= self.interval or \
                 self.current_target is None or \
                 self.current_target < lb or \

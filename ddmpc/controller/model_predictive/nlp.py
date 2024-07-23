@@ -719,6 +719,7 @@ class NLP:
         return np.array(cold_start_values)
 
     def summary(self):
+        """ print summary of NLP (parameter variables, optimization variables, constraints and objectives) """
 
         print('------------------------- NLP SUMMARY -------------------------')
 
