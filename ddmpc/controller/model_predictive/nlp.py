@@ -28,9 +28,7 @@ class Objective:
         """
         :param feature: feature to weight in the cost function
         :param cost: cost function to apply to the feature
-        :param k_0_offset: offset for the first value(s) of the Feature (e.g. first state is measured and cannot be
-                           changed -> therefore no consideration in cost function)
-        :param k_N_offset: offset for the last value(s) of the feature (e.g. last control has no effect)
+        :param ignore_mode: set True if mode should be ignored
         """
 
         self.feature:       Feature = feature
@@ -58,9 +56,6 @@ class Constraint:
         :param feature: feature to add constraints to
         :param lb: lower bound for the constraint
         :param ub: upper bound for the constraint
-        :param k_0_offset: offset for the first value(s) of the Feature (e.g. first state is measured and cannot be
-            changed -> therefore no consideration in cost function)
-        :param k_N_offset: offset for the last value(s) of the feature (e.g. last control has no effect)
         """
 
         self.feature:       Feature = feature
@@ -402,7 +397,6 @@ class NLPSolution:
 
 class NLP:
 
-
     def __init__(
             self,
             N:              int,
@@ -551,7 +545,7 @@ class NLP:
                     # iterate backwards over the lag
                     for i in range(k - 1, k - inp.lag - 1, -1):
 
-                        assert (inp.source, i) in self._var_map.keys(),\
+                        assert (inp.source, i) in self._var_map.keys(), \
                             KeyError(f'Please make sure {(inp.source, i)} is part of the Model. max_lag={self.idx_map[inp.source]}')
 
                         nlp_var = self._var_map[inp.source, i]
@@ -632,7 +626,6 @@ class NLP:
                             NLPObjective(objective(ub_eps.mx))
                         )
 
-
                     elif isinstance(feature.mode, Steady):
 
                         eps1 = NLPEpsilon(feature=feature, k=k)
@@ -712,10 +705,12 @@ class NLP:
                     cold_start_values.append((lb + ub) / 2)
                 else:
                     cold_start_values.append(0)
-                    warnings.warn(f'Mode for feature {opt_var.feature.source.name} does not provide lb, ub or target for cold start initialization, using 0 as default.')
+                    warnings.warn(f'Mode for feature {opt_var.feature.source.name} does not provide lb, ub or target '
+                                  f'for cold start initialization, using 0 as default.')
             else:
                 cold_start_values.append(0)
-                warnings.warn(f'Cold start initialization for class {opt_var.feature.source} not implemented yet, using 0 as default.')
+                warnings.warn(f'Cold start initialization for class {opt_var.feature.source} not implemented yet, '
+                              f'using 0 as default.')
         return np.array(cold_start_values)
 
     def summary(self):
@@ -802,7 +797,6 @@ class NLP:
         else:
             nlp_instance['x0'] = self._get_coldstart()
 
-
         # call to the solver
         print('start solving')
         start_time = time.perf_counter()
@@ -817,7 +811,6 @@ class NLP:
         else:
             self.lastSolutionFailed = False
 
-
         self.solution = NLPSolution(
             par_vars=self._par_vars,
             opt_vars=self._opt_vars,
@@ -830,5 +823,3 @@ class NLP:
         )
 
         return self.solution
-
-
