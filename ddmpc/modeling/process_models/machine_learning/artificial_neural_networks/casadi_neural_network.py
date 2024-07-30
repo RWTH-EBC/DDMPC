@@ -280,7 +280,7 @@ class Normalization(Layer):
 
 class Cropping1D(Layer):
 
-    def __init__(self, layer: layers.Normalization):
+    def __init__(self, layer: layers.Cropping1D):
         super(Cropping1D, self).__init__(layer)
         self.cropping = layer.cropping
 
@@ -293,7 +293,7 @@ class Cropping1D(Layer):
 
 class Concatenate(Layer):
 
-    def __init__(self, layer: layers.Normalization):
+    def __init__(self, layer: layers.Concatenate):
         super(Concatenate, self).__init__(layer)
         self.axis = layer.axis
 
@@ -311,7 +311,7 @@ class Concatenate(Layer):
 
 class Reshape(Layer):
 
-    def __init__(self, layer: layers.Normalization):
+    def __init__(self, layer: layers.Reshape):
         super(Reshape, self).__init__(layer)
         self.shape = layer.target_shape
 
