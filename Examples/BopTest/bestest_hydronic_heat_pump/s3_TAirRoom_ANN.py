@@ -17,7 +17,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData) -> Trai
     training_data.add(pid_data)
     training_data.shuffle()
     training_data.split(trainShare=0.8, validShare=0.1, testShare=0.1)
-    write_pkl(training_data, f'TrainingData_f{name}_ANN', FileManager.data_dir())
+    write_pkl(training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
 
     # Create a sequential Tuner Model for hyperparameter tuning
     tuner = TunerModel(
