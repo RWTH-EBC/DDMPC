@@ -9,10 +9,11 @@ time_offset = 1546300800    # unix time stamp: time offset to set the date to 01
 
 # different modes for room air temperature
 # defines boundaries, targets and time interval between different targets / set points
-TAirRoom_steady = Steady(day_start=8, day_end=15, day_target=290.15, night_target=294.15)
-TAirRoom_random = Random(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15,
-                         interval=3600 * 6)
-TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15)
+TAirRoom_steady = Steady(day_start=7, day_end=20, day_target=290.15, night_target=294.15)
+TAirRoom_random = Identification(day_start=7, day_end=20,
+                                 day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15,
+                                 min_interval=one_hour, max_interval=one_hour*6, min_change=0.5, max_change=3)
+TAirRoom_economic = Economic(day_start=7, day_end=20, day_lb=288.15, day_ub=303.15, night_lb=294.15, night_ub=297.15)
 
 """ Define the features (Variables) of your system """
 # creates room temperature [K] as Controlled object, later used in optimization function
@@ -22,26 +23,25 @@ TAirRoom_economic = Economic(day_start=8, day_end=19, day_lb=288.15, day_ub=303.
 # https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
 TAirRoom = Controlled(
     source=Readable(
-        name="TAir",                            # colloquial name
+        name="T_zone",                            # colloquial name
         read_name="reaTZon_y",                  # zone operative temperature; column name in df
         plt_opts=PlotOptions(color=red, line=line_solid),
     ),
     mode=TAirRoom_steady,
 )
-
 # Change can calculate the change of in this case the room temperature between the current and the previous time step
 TAirRoom_change = Connection(Change(base=TAirRoom))
 
-# creates ambient temperature [K] as Disturbance based on forecast given through BOPTEST framework
-# read name, forecast name and documentation given in BOPTEST framework on
+# creates power of heat pump [W] as Controlled object, later used in optimization function
+# read name and documentation given in BOPTEST framework on
 # https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
-t_amb = Disturbance(
-    Readable(
-        name="Ambient temperature",             # colloquial name
-        read_name="weaSta_reaWeaTDryBul_y",     # outside dry bulb temperature measurement; column name in df
-        plt_opts=PlotOptions(color=blue, line=line_solid, label="Ambient Temperature"),
+power_hp = Controlled(
+    source=Readable(
+        name="el. Power HP",                    # colloquial name
+        read_name="reaPHeaPum_y",               # heat pump electrical power; column name in df
+        plt_opts=PlotOptions(color=red, line=line_solid, label="P_hp"),
     ),
-    forecast_name="TDryBul",                    # dry bulb temperature at ground level [K]
+    mode=Steady(day_target=0, night_target=0),  # power of heat pump should be as low as possible
 )
 
 # creates heat pump modulating signal [1] as Control object
@@ -59,6 +59,22 @@ u_hp = Control(
     default=0,
     cutoff=0.1,                                 # everything below cutoff results in signal 0 due to minimal rotational speed of hp
 )
+# Change can calculate the change between the current and the previous time step
+u_hp_change = Connection(Change(base=u_hp))
+
+# creates ambient temperature [K] as Disturbance based on forecast given through BOPTEST framework
+# read name, forecast name and documentation given in BOPTEST framework on
+# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
+t_amb = Disturbance(
+    Readable(
+        name="Ambient temperature",             # colloquial name
+        read_name="weaSta_reaWeaTDryBul_y",     # outside dry bulb temperature measurement; column name in df
+        plt_opts=PlotOptions(color=blue, line=line_solid, label="Ambient Temperature"),
+    ),
+    forecast_name="TDryBul",                    # dry bulb temperature at ground level [K]
+)
+# Change can calculate the change between the current and the previous time step
+t_amb_change = Connection(Change(base=t_amb))
 
 # creates direct radiation [W/m^2] as Disturbance based on forecast given through BOPTEST framework
 # read name, forecast name and documentation given in BOPTEST framework on
@@ -67,13 +83,11 @@ rad_dir = Disturbance(
     Readable(
         name="direct radiation",                # colloquial name
         read_name="weaSta_reaWeaHDirNor_y",     # direct normal radiation measurement; column name in df
-        plt_opts=PlotOptions(color=light_red, line=line_solid, label="Radiation"),
+        plt_opts=PlotOptions(color=light_red, line=line_solid, label="direct radiation"),
     ),
     forecast_name="HDirNor",                    # direct normal radiation
 )
-
 # Change can calculate the change between the current and the previous time step
-t_amb_change = Connection(Change(base=t_amb))
 rad_dir_change = Connection(Change(base=rad_dir))
 
 # creates power of fan [W] as Tracking object
@@ -86,18 +100,6 @@ power_fan = Tracking(
         read_name="reaPFan_y",                  # electrical power of the heat pump evaporator fan; column name in df
         plt_opts=PlotOptions(color=blue, line=line_dotted, label="P_fan"),
     )
-)
-
-# creates power of heat pump [W] as Controlled object, later used in optimization function
-# read name and documentation given in BOPTEST framework on
-# https://ibpsa.github.io/project1-boptest/docs-testcases/bestest_hydronic_heat_pump/index.html
-power_hp = Controlled(
-    source=Readable(
-        name="el. Power HP",                    # colloquial name
-        read_name="reaPHeaPum_y",               # heat pump electrical power; column name in df
-        plt_opts=PlotOptions(color=red, line=line_solid, label="P_hp"),
-    ),
-    mode=Steady(day_target=0, night_target=0),  # power of heat pump should be as low as possible
 )
 
 # creates power of emission circuit pump [W] as Tracking object
@@ -123,9 +125,7 @@ u_fan = Tracking(
         plt_opts=PlotOptions(color=blue, line=line_solid, label="u_fan"),
     ),
 )
-
 # Change can calculate the change between the current and the previous time step
-u_hp_change = Connection(Change(base=u_hp))
 u_fan_change = Tracking(Change(base=u_fan))
 
 # creates electricity price [Euro/kWh] as Disturbance based on forecast given through BOPTEST framework
@@ -169,10 +169,10 @@ system = BopTest(
 # power of heat pump is controlled variable
 power_hp_TrainingData = TrainingData(
     inputs=Inputs(
+        Input(source=TAirRoom, lag=1),
+        Input(source=t_amb, lag=1),
         Input(source=u_hp, lag=1),
         Input(source=u_hp_logistic, lag=1),
-        Input(source=t_amb, lag=1),
-        Input(source=TAirRoom, lag=1),
     ),
     output=Output(power_hp),
     step_size=one_minute * 15,
@@ -184,8 +184,8 @@ TAirRoom_TrainingData = TrainingData(
     inputs=Inputs(
         Input(source=TAirRoom, lag=3),
         Input(source=t_amb, lag=2),
-        Input(source=rad_dir, lag=1),
         Input(source=u_hp, lag=3),
+        Input(source=rad_dir, lag=1),
     ),
     output=Output(TAirRoom_change),
     step_size=one_minute * 15,
@@ -195,32 +195,20 @@ TAirRoom_TrainingData = TrainingData(
 """ Define which quantities should be plotted """
 # Define plot / plot appearance for PID
 pid_plotter = Plotter(
-    SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
-    SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
-    SubPlot(features=[u_fan], y_label="Modulation fan", step=True),
-    SubPlot(features=[t_amb, rad_dir], y_label="disturbances in %", normalize=True),
+    SubPlot(features=[TAirRoom], y_label="Zone temperature in °C", shift=273.15),
     SubPlot(features=[power_hp], y_label="el. Power in W", normalize=False),
-    SubPlot(features=[costs_el], y_label="el. Costs in ct")
+    SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
+    SubPlot(features=[t_amb], y_label="Ambient temperature in °C", shift=273.15),
+    SubPlot(features=[rad_dir], y_label="direct radiation"),
 )
 
 # Define plot / plot appearance for MPC
 mpc_plotter = Plotter(
-    SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
+    SubPlot(features=[TAirRoom], y_label="Zone temperature in °C", shift=273.15),
+    SubPlot(features=[power_hp], y_label="el. Power in W", normalize=False),
     SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
-    SubPlot(features=[u_fan], y_label="Modulation fan", step=True),
-    SubPlot(features=[t_amb, rad_dir], y_label="disturbances in %", normalize=True),
-    SubPlot(features=[power_hp], y_label="el. Power in W", step=True, normalize=False),
+    SubPlot(features=[t_amb], y_label="Ambient temperature in °C", shift=273.15),
+    SubPlot(features=[rad_dir], y_label="direct radiation"),
+    SubPlot(features=[price_el], y_label="el. price in €/kW"),
     SubPlot(features=[costs_el], y_label="el. Costs in ct"),
-    SubPlot(features=[price_el], y_label="el. price in €/kW")
-)
-
-# Define plot / plot appearance for MPC solution
-mpc_solution_plotter = Plotter(
-    SubPlot(features=[TAirRoom], y_label="Room temperature in °C", shift=273.15),
-    SubPlot(features=[u_hp], y_label="Modulation hp", step=True),
-    SubPlot(features=[t_amb], y_label="Ambient temperature in °C"),
-    SubPlot(features=[rad_dir], y_label="Radiation"),
-    SubPlot(features=[power_hp], y_label="el. Power in W", step=True, normalize=False),
-    SubPlot(features=[costs_el], y_label="el. Costs in €"),
-    SubPlot(features=[price_el], y_label="el. price in €/kW")
 )

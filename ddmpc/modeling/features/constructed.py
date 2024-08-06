@@ -443,6 +443,72 @@ class Subtraction(Constructed):
         return 0
 
 
+class Addition(Constructed):
+
+    def __init__(
+            self,
+            b1: Union[Source, Feature],
+            b2: Union[Source, Feature],
+            plt_opts: Union[PlotOptions, None] = None,
+    ):
+
+        if isinstance(b1, Feature):
+            b1 = b1.source
+
+        if isinstance(b2, Feature):
+            b2 = b2.source
+
+        if plt_opts is None:
+            plt_opts = b1.plt_opts
+
+        Constructed.__init__(
+            self,
+            name=f'{self.__class__.__name__}({b1.name} + {b2.name})',
+            plt_opts=plt_opts,
+        )
+
+        self.b1 = b1
+        self.b2 = b2
+
+    @property
+    def subs(self) -> list[Source]:
+        return [self.b1, self.b2]
+
+    def update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+
+        row = df.index[idx]
+
+        df.loc[row, self.col_name] = float(df.loc[row, self.b1.col_name] + df.loc[row, self.b2.col_name])
+
+        return df
+
+    def process(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        df[self.col_name] = df[self.b1.col_name] + df[self.b2.col_name]
+
+        return df
+
+    def constraint(self, k: int) -> ca.MX:
+
+        if k not in self.mx:
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self}.')
+
+        if k not in self.b1.mx:
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+
+        if k not in self.b2.mx:
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+
+        lhs = self[k]
+        rhs = self.b1[k] + self.b2[k]
+
+        return lhs - rhs
+
+    @property
+    def past_steps(self) -> int:
+        return 0
+
+
 class Product(Constructed):
     """
     Provides methods to calculate the scaled product of both given Sources / Features

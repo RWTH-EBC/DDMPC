@@ -249,6 +249,7 @@ class FMU(System):
 
     def close(self):
         """ Closes the simulation and clears the fmu object """
+        super().close()
 
         self.fmu.terminate()
         self.fmu.freeInstance()

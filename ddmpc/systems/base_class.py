@@ -215,3 +215,6 @@ class System(abc.ABC):
         dc = DataContainer(df=df[skip_rows:])
 
         return dc
+
+    def close(self):
+        self.previous_df = pd.DataFrame(dtype=float)

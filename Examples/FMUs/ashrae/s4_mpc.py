@@ -107,6 +107,7 @@ for repetition in range(14):  # for 14 days
         df = online_data.df
     else:
         df = pd.concat([df, online_data.df], axis=0)
+    system.close()
 
 # save data frame with data from all repetitions to file data.csv (directory: /stored_data/[mpc_name]/ )
 df.to_csv(str(Path(FileManager.experiment_dir(), 'data.csv')))
