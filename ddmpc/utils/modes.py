@@ -227,8 +227,8 @@ class Identification(Mode):
 
             min_interval: int = 60 * 60 * 2,
             max_interval: int = 60 * 60 * 5,
-            min_change: int = 1,
-            max_change: int = 2,
+            min_change: float = 1,
+            max_change: float = 2,
     ):
         """
         random sequence of set points between given bounds in random intervals between given bounds
@@ -255,8 +255,8 @@ class Identification(Mode):
         self.max_interval: int = max_interval
         self.min_interval: int = min_interval
         self.interval: int = random.randrange(min_interval, max_interval)
-        self.min_change: int = min_change
-        self.max_change: int = max_change
+        self.min_change: float = min_change
+        self.max_change: float = max_change
 
         self.last_randomization: Optional[int] = None       # at initialization there hasn't been a randomization yet
         self.current_target: Optional[int] = None           # at initialization there is no current target yet
