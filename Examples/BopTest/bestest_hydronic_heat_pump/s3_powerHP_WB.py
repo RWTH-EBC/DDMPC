@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # Define the Inputs and Outputs of the process models using the TrainingData class
     # Define training data for supervised machine learning
-    # Room air temperature is controlled variable
+    # power of heat pump is controlled variable
     training_data = TrainingData(
         inputs=Inputs(
             Input(source=u_hp, lag=1),

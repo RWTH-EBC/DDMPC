@@ -7,12 +7,12 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
 
     training_data.add(pid_data)
     training_data.split(1.0, 0.0, 0.0)
-    write_pkl(training_data, f'TrainingData_f{name}_linReg', FileManager.data_dir())
+    write_pkl(training_data, f'TrainingData_{name}_linReg', FileManager.data_dir())
 
     lin = LinearRegression()
     lin.fit(training_data=training_data)
 
-    TAirRoom_TrainingData.split(0.0, 0.0, 1.0)
+    training_data.split(0.0, 0.0, 1.0)
     lin.test(training_data=training_data)
 
     lin.print_coefficients(training_data)

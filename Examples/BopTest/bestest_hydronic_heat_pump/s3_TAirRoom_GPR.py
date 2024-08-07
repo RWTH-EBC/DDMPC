@@ -8,7 +8,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     training_data.add(pid_data)
     training_data.shuffle()
     training_data.split(0.8, 0.0, 0.2)
-    write_pkl(training_data, f'TrainingData_f{name}_GPR', FileManager.data_dir())
+    write_pkl(training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
 
     gpr = GaussianProcess(normalize=True)
     gpr.fit(training_data=training_data)

@@ -656,6 +656,4 @@ class Plotter:
             axs[-1].xaxis.set_minor_formatter(minor_formatter)
         else:
             axs[-1].xaxis.set_minor_formatter(self.minor_formatter)
-
-
-
+            
