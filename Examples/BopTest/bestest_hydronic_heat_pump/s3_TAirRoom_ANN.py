@@ -6,7 +6,7 @@ Train an ANN to learn the Temperature change using the generated training data
 """
 
 
-def run(training_data_name: str, name: str, training_data: TrainingData) -> TrainingData:
+def run(training_data_name: str, name: str, training_data: TrainingData):
 
     # load DataHandler from pickle file saved in 2_generate_data
     pid_data = load_DataHandler(f'{training_data_name}')
@@ -47,9 +47,21 @@ def run(training_data_name: str, name: str, training_data: TrainingData) -> Trai
     # Saves all neural networks to pickle (directory: /stored_data/predictors/ )
     trainer.save(filename=f'{name}_ANN', override=True)
 
-    return training_data
-
 
 if __name__ == '__main__':
 
-    TrainingData = run(training_data_name='pid_data', name='TAirRoom', training_data=TAirRoom_TrainingData)
+    # Define the Inputs and Outputs of the process models using the TrainingData class
+    # Define training data for supervised machine learning
+    # Room air temperature is controlled variable
+    training_data = TrainingData(
+        inputs=Inputs(
+            Input(source=TAirRoom, lag=3),
+            Input(source=t_amb, lag=2),
+            Input(source=rad_dir, lag=1),
+            Input(source=u_hp, lag=3),
+        ),
+        output=Output(TAirRoom_change),
+        step_size=one_minute * 15,
+    )
+
+    run(training_data_name='pid_data', name='TAirRoom', training_data=training_data)

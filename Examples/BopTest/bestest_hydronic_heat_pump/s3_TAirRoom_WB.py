@@ -1,7 +1,7 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 
-def run(training_data_name: str, name: str, training_data: TrainingData) -> TrainingData:
+def run(training_data_name: str, name: str, training_data: TrainingData):
 
     TAirRoom_pred = WhiteBox(
         inputs=[t_amb.source, TAirRoom.source, u_hp.source, rad_dir.source],
@@ -18,15 +18,13 @@ def run(training_data_name: str, name: str, training_data: TrainingData) -> Trai
     TAirRoom_pred.test(training_data=training_data)
     # write_pkl(TAirRoom_pred,f'{name}_WB')
 
-    return training_data
-
 
 if __name__ == '__main__':
 
     # Define the Inputs and Outputs of the process models using the TrainingData class
     # Define training data for supervised machine learning
     # Room air temperature is controlled variable
-    TrainingData = TrainingData(
+    training_data = TrainingData(
         inputs=Inputs(
             Input(source=t_amb, lag=1),
             Input(source=TAirRoom, lag=1),
@@ -36,5 +34,5 @@ if __name__ == '__main__':
         output=Output(TAirRoom_change),
         step_size=one_minute * 15,
     )
-
-    TrainingData = run(training_data_name='pid_data', name='TAirRoom', training_data=TrainingData)
+    
+    run(training_data_name='pid_data', name='TAirRoom', training_data=training_data)
