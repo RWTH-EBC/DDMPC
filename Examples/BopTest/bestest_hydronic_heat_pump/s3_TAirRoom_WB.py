@@ -6,8 +6,9 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     TAirRoom_pred = WhiteBox(
         inputs=[t_amb.source, TAirRoom.source, u_hp.source, rad_dir.source],
         output=TAirRoom_change,
-        output_expression=(one_minute*15/70476480) *
-                          (-15000*(TAirRoom.source-t_amb.source)/35 + 24*rad_dir.source + 15000*u_hp.source),
+        output_expression=(one_minute * 15 / 70476480) *
+                          (-15000 * (TAirRoom.source - t_amb.source) / 35
+                           + 24 * rad_dir.source + 15000 * u_hp.source),
         step_size=one_minute*15
     )
 
