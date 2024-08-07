@@ -23,17 +23,14 @@ class Objective:
             self,
             feature:        Feature,
             cost:           Cost,
-            ignore_mode:    bool = False,
     ):
         """
         :param feature: feature to weight in the cost function
         :param cost: cost function to apply to the feature
-        :param ignore_mode: set True if mode should be ignored
         """
 
         self.feature:       Feature = feature
         self.cost:          Cost = cost
-        self.ignore_mode:   bool = ignore_mode
 
     def __str__(self):
         return f'Objective(feature={self.feature})'
