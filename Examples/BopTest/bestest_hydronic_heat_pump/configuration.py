@@ -163,35 +163,6 @@ system = BopTest(
 )  # initialize system
 
 
-""" Define the Inputs and Outputs of the
- process models using the Training data class"""
-# Define training data for supervised machine learning (power_hp)
-# power of heat pump is controlled variable
-power_hp_TrainingData = TrainingData(
-    inputs=Inputs(
-        Input(source=u_hp, lag=1),
-        Input(source=u_hp_logistic, lag=1),
-        Input(source=t_amb, lag=1),
-        Input(source=TAirRoom, lag=1),
-    ),
-    output=Output(power_hp),
-    step_size=one_minute * 15,
-)
-
-# Define training data for supervised machine learning
-# Room air temperature is controlled variable
-TAirRoom_TrainingData = TrainingData(
-    inputs=Inputs(
-        Input(source=TAirRoom, lag=3),
-        Input(source=t_amb, lag=2),
-        Input(source=rad_dir, lag=1),
-        Input(source=u_hp, lag=3),
-    ),
-    output=Output(TAirRoom_change),
-    step_size=one_minute * 15,
-)
-
-
 """ Define which quantities should be plotted """
 # Define plot / plot appearance for PID
 pid_plotter = Plotter(

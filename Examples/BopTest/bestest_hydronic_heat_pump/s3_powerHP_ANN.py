@@ -2,7 +2,7 @@ from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from keras.callbacks import EarlyStopping
 
 """
-Train an ANN to learn the Temperature change using the generated training data
+Train an ANN to learn the change of the power of the heat pump using the generated training data
 """
 
 
@@ -22,7 +22,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     # Create a sequential Tuner Model for hyperparameter tuning
     tuner = TunerModel(
         TunerBatchNormalizing(),            # layer to normalize inputs
-        TunerDense(units=(4, 8, 16)),              # layer can either have 4, 8 or 16 neurons
+        TunerDense(units=(16, 32)),              # layer can either have 4, 8 or 16 neurons
         # TunerDense(units=(4, 8), optional=True),
         name=name
     )
@@ -52,16 +52,16 @@ if __name__ == '__main__':
 
     # Define the Inputs and Outputs of the process models using the TrainingData class
     # Define training data for supervised machine learning
-    # Room air temperature is controlled variable
+    # power of heat pump is controlled variable
     training_data = TrainingData(
         inputs=Inputs(
-            Input(source=TAirRoom, lag=3),
-            Input(source=t_amb, lag=2),
-            Input(source=rad_dir, lag=1),
-            Input(source=u_hp, lag=3),
+            Input(source=u_hp, lag=1),
+            Input(source=u_hp_logistic, lag=1),
+            Input(source=t_amb, lag=1),
+            Input(source=TAirRoom, lag=1),
         ),
-        output=Output(TAirRoom_change),
+        output=Output(power_hp),
         step_size=one_minute * 15,
     )
 
-    run(training_data_name='pid_data', name='TAirRoom', training_data=training_data)
+    run(training_data_name='pid_data', name='powerHP', training_data=training_data)
