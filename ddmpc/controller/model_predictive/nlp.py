@@ -615,6 +615,14 @@ class NLP:
                             NLPConstraint(nlp_value.mx - ub.mx - ub_eps.mx, -inf, 0)
                         )
 
+                        # eps > 0
+                        self._constraints.append(
+                            NLPConstraint(expression=lb_eps.mx, lb=0, ub=inf)
+                        )
+                        self._constraints.append(
+                            NLPConstraint(expression=ub_eps.mx, lb=0, ub=inf)
+                        )
+
                         # objective
                         self._objectives.append(
                             NLPObjective(objective(lb_eps.mx))
@@ -638,6 +646,14 @@ class NLP:
                         )
                         self._constraints.append(
                             NLPConstraint(nlp_value.mx - target.mx - eps2.mx, -inf, 0)
+                        )
+
+                        # eps > 0
+                        self._constraints.append(
+                            NLPConstraint(expression=eps1.mx, lb=0, ub=inf)
+                        )
+                        self._constraints.append(
+                            NLPConstraint(expression=eps2.mx, lb=0, ub=inf)
                         )
 
                         # objective
@@ -680,8 +696,14 @@ class NLP:
                     )
 
                 else:
+                    eps = NLPEpsilon(feature=feature, k=k)
+                    self._opt_vars.append(eps)
 
-                    self._objectives.append(NLPObjective(objective(nlp_value.mx)))
+                    self._constraints.append(
+                        NLPConstraint(expression=eps.mx - nlp_value.mx, lb=0, ub=0)
+                    )
+
+                    self._objectives.append(NLPObjective(objective(eps.mx)))
 
     def _get_coldstart(self):
 
