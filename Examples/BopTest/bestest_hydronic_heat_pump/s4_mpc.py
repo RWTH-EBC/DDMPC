@@ -46,7 +46,7 @@ hhp_MPC = ModelPredictive(
         ],
     ),
     forecast_callback=system.get_forecast,
-    solution_plotter=mpc_solution_plotter,
+    solution_plotter=mpc_plotter,
     show_solution_plot=True,
     save_solution_plot=False,
     save_solution_data=True,
@@ -89,7 +89,7 @@ for repetition in range(14):        # for 14 days (standard period in BOPTEST to
     # returns data frame (only current and not past data frames) in a DataContainer
     # plots data and saves plot to disk (directory: /stored_data/plots/[mpc_name]/ )
     online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
-    online_data.plot(plotter=mpc_solution_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
+    online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
     # # online learning TAirRoom
     # TAirRoom_TrainingData.add(online_data)
@@ -113,6 +113,7 @@ for repetition in range(14):        # for 14 days (standard period in BOPTEST to
         df = online_data.df
     else:
         df = pd.concat([df, online_data.df], axis=0)
+system.close()
 
 # save data frame with data from all repetitions to file data.csv (directory: /stored_data/[mpc_name]/ )
 df.to_csv(str(Path(FileManager.experiment_dir(), 'data.csv')))

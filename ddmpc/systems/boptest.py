@@ -153,9 +153,6 @@ class BopTest(System):
         except:
             pass
 
-    def close(self):
-        pass
-
     def read(self) -> dict:
         """
         returns readable measurements

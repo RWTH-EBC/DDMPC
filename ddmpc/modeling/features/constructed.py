@@ -1,4 +1,4 @@
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 import casadi as ca
 
@@ -13,7 +13,7 @@ class Change(Constructed):
     def __init__(
             self,
             base: Union[Source, Feature],   # either Source or Feature
-            plt_opts: Union[PlotOptions, None] = None,  # Union [X, None] equals Optional[X]
+            plt_opts: Optional[PlotOptions] = None,  # Union [X, None] equals Optional[X]
     ):
 
         if isinstance(base, Feature):
@@ -159,7 +159,7 @@ class RunningMean(Constructed):
             self,
             base:       Union[Source, Feature],
             n:          int,
-            plt_opts:   Union[PlotOptions, None] = None,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         if isinstance(base, Feature):
@@ -225,7 +225,7 @@ class HeatFlow(Constructed):
             temperature_out:    Union[Source, Feature],
             cp:                 float = 4.18,   # water, [kJ/(kg*K)]
             den:                float = 1000,   # water. [kg/m^3]
-            plt_opts:           Union[PlotOptions, None] = None,
+            plt_opts:           Optional[PlotOptions] = None,
 
     ):
 
@@ -312,7 +312,7 @@ class EnergyBalance(Constructed):
             self,
             name:       str,
             heat_flows: Union[list[HeatFlow], list[Feature]],
-            plt_opts:   Union[PlotOptions, None] = None,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         self.heat_flows: list[HeatFlow] = list()
@@ -383,7 +383,7 @@ class Subtraction(Constructed):
             self,
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if isinstance(b1, Feature):
@@ -431,10 +431,76 @@ class Subtraction(Constructed):
             raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
 
         if k not in self.b2.mx:
-            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b2} which is base for {self}.')
 
         lhs = self[k]
         rhs = self.b1[k] - self.b2[k]
+
+        return lhs - rhs
+
+    @property
+    def past_steps(self) -> int:
+        return 0
+
+
+class Addition(Constructed):
+
+    def __init__(
+            self,
+            b1: Union[Source, Feature],
+            b2: Union[Source, Feature],
+            plt_opts: Optional[PlotOptions] = None,
+    ):
+
+        if isinstance(b1, Feature):
+            b1 = b1.source
+
+        if isinstance(b2, Feature):
+            b2 = b2.source
+
+        if plt_opts is None:
+            plt_opts = b1.plt_opts
+
+        Constructed.__init__(
+            self,
+            name=f'{self.__class__.__name__}({b1.name} + {b2.name})',
+            plt_opts=plt_opts,
+        )
+
+        self.b1 = b1
+        self.b2 = b2
+
+    @property
+    def subs(self) -> list[Source]:
+        return [self.b1, self.b2]
+
+    def update(self, df: pd.DataFrame, idx: int) -> pd.DataFrame:
+
+        row = df.index[idx]
+
+        df.loc[row, self.col_name] = float(df.loc[row, self.b1.col_name] + df.loc[row, self.b2.col_name])
+
+        return df
+
+    def process(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        df[self.col_name] = df[self.b1.col_name] + df[self.b2.col_name]
+
+        return df
+
+    def constraint(self, k: int) -> ca.MX:
+
+        if k not in self.mx:
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self}.')
+
+        if k not in self.b1.mx:
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+
+        if k not in self.b2.mx:
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b2} which is base for {self}.')
+
+        lhs = self[k]
+        rhs = self.b1[k] + self.b2[k]
 
         return lhs - rhs
 
@@ -455,7 +521,7 @@ class Product(Constructed):
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
             scale: float = 1,
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if isinstance(b1, Feature):
@@ -513,7 +579,7 @@ class Product(Constructed):
             raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
 
         if k not in self.b2.mx:
-            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b2} which is base for {self}.')
 
         lhs = self[k]
         rhs = self.b1[k] * self.b2[k]*self.scale
@@ -532,7 +598,7 @@ class Shift(Constructed):
             self,
             base:       Union[Source, Feature],
             n:          int,
-            plt_opts:   Union[PlotOptions, None] = None,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         if isinstance(base, Feature):
@@ -600,7 +666,7 @@ class TimeFunc(Constructed):
             self,
             name: str,
             func: Callable,
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if plt_opts is None:
@@ -650,7 +716,7 @@ class Func(Constructed):
             name: str,
             func: Callable,
             base: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
         if isinstance(base, Feature):
             base = base.source
