@@ -431,7 +431,7 @@ class Subtraction(Constructed):
             raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
 
         if k not in self.b2.mx:
-            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b2} which is base for {self}.')
 
         lhs = self[k]
         rhs = self.b1[k] - self.b2[k]
@@ -497,7 +497,7 @@ class Addition(Constructed):
             raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
 
         if k not in self.b2.mx:
-            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b2} which is base for {self}.')
 
         lhs = self[k]
         rhs = self.b1[k] + self.b2[k]
@@ -579,7 +579,7 @@ class Product(Constructed):
             raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
 
         if k not in self.b2.mx:
-            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b1} which is base for {self}.')
+            raise ValueError(f'Did not find k={k} in the keys of mx for {self.b2} which is base for {self}.')
 
         lhs = self[k]
         rhs = self.b1[k] * self.b2[k]*self.scale
