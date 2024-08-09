@@ -1,4 +1,4 @@
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 import casadi as ca
 
@@ -13,7 +13,7 @@ class Change(Constructed):
     def __init__(
             self,
             base: Union[Source, Feature],   # either Source or Feature
-            plt_opts: Union[PlotOptions, None] = None,  # Union [X, None] equals Optional[X]
+            plt_opts: Optional[PlotOptions] = None,  # Union [X, None] equals Optional[X]
     ):
 
         if isinstance(base, Feature):
@@ -159,7 +159,7 @@ class RunningMean(Constructed):
             self,
             base:       Union[Source, Feature],
             n:          int,
-            plt_opts:   Union[PlotOptions, None] = None,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         if isinstance(base, Feature):
@@ -225,7 +225,7 @@ class HeatFlow(Constructed):
             temperature_out:    Union[Source, Feature],
             cp:                 float = 4.18,   # water, [kJ/(kg*K)]
             den:                float = 1000,   # water. [kg/m^3]
-            plt_opts:           Union[PlotOptions, None] = None,
+            plt_opts:           Optional[PlotOptions] = None,
 
     ):
 
@@ -312,7 +312,7 @@ class EnergyBalance(Constructed):
             self,
             name:       str,
             heat_flows: Union[list[HeatFlow], list[Feature]],
-            plt_opts:   Union[PlotOptions, None] = None,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         self.heat_flows: list[HeatFlow] = list()
@@ -383,7 +383,7 @@ class Subtraction(Constructed):
             self,
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if isinstance(b1, Feature):
@@ -449,7 +449,7 @@ class Addition(Constructed):
             self,
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if isinstance(b1, Feature):
@@ -521,7 +521,7 @@ class Product(Constructed):
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
             scale: float = 1,
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if isinstance(b1, Feature):
@@ -598,7 +598,7 @@ class Shift(Constructed):
             self,
             base:       Union[Source, Feature],
             n:          int,
-            plt_opts:   Union[PlotOptions, None] = None,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         if isinstance(base, Feature):
@@ -666,7 +666,7 @@ class TimeFunc(Constructed):
             self,
             name: str,
             func: Callable,
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
 
         if plt_opts is None:
@@ -716,7 +716,7 @@ class Func(Constructed):
             name: str,
             func: Callable,
             base: Union[Source, Feature],
-            plt_opts: Union[PlotOptions, None] = None,
+            plt_opts: Optional[PlotOptions] = None,
     ):
         if isinstance(base, Feature):
             base = base.source
