@@ -75,6 +75,9 @@ class ModelPredictive(Controller):
         if self._solution_plotter is None:
             return
 
+        if not os.path.exists(str(Path(file_manager.plots_dir(), 'solutions'))):
+            os.makedirs(str(Path(file_manager.plots_dir(), 'solutions')))
+
         # add the time column to the DataFrame
         df['time'] = current_time + df.index * self.step_size_model
 
