@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 import requests
 import warnings
 from typing import Optional
+import json
 
 
 class BopTest(System):
@@ -16,9 +17,17 @@ class BopTest(System):
             self,
             model: Model,
             step_size: int,
-            url: str,       # url of server with BOPTEST framework
             time_offset: int,
+            url: Optional[str] = None,
     ):
+        """
+        BopTest class provides function to use BOPTEST framework
+
+        :param model: model of the system
+        :param step_size: step size of the system
+        :param time_offset: unix time stamp, 0 is 01.01.1970
+        :param url: url of server with BOPTEST framework; if none is given, BOPTEST Service API (https://api.boptest.net) is used
+        """
 
         super(BopTest, self).__init__(
             step_size=step_size,
@@ -26,20 +35,25 @@ class BopTest(System):
             time_offset=time_offset
         )
 
-        self.url = url
+        test_case = 'bestest_hydronic_heat_pump'
+
+        if url is None:
+            self.url = "https://api.boptest.net"  # documentation see https://colab.research.google.com/github/NREL/boptest-service/blob/develop/docs/Introduction_to_BOPTEST_Service_APIs.ipynb#scrollTo=G8f9m6M_NTkg
+            self.test_id = requests.post(urljoin(self.url, url='testcases/' + test_case + '/select')).json()['testid']
+        else:
+            self.url = url
+            self.test_id = ''
 
         # documentation of API see https://ibpsa.github.io/project1-boptest/docs-userguide/api.html
         # key points of documentation implemented as comments in this code
-        self.url:                   str = url
-        self.url_advance:           str = urljoin(url, url='advance')
-        self.url_inputs:            str = urljoin(url, url='inputs')
-        self.url_measurements:      str = urljoin(url, url='measurements')
-        self.url_step:              str = urljoin(url, url='step')
-        self.url_advance:           str = urljoin(url, url='advance')
-        self.url_initialize:        str = urljoin(url, url='initialize')
-        self.url_scenario:          str = urljoin(url, url='scenario')
-        self.url_forecast:          str = urljoin(url, url='forecast')
-        self.url_forecast_points:   str = urljoin(url, url='forecast_points')
+        self.url_advance:           str = urljoin(self.url, url=f'advance/{self.test_id}')
+        self.url_inputs:            str = urljoin(self.url, url=f'inputs/{self.test_id}')
+        self.url_measurements:      str = urljoin(self.url, url=f'measurements/{self.test_id}')
+        self.url_step:              str = urljoin(self.url, url=f'step/{self.test_id}')
+        self.url_initialize:        str = urljoin(self.url, url=f'initialize/{self.test_id}')
+        self.url_scenario:          str = urljoin(self.url, url=f'scenario/{self.test_id}')
+        self.url_forecast:          str = urljoin(self.url, url=f'forecast/{self.test_id}')
+        self.url_forecast_points:   str = urljoin(self.url, url=f'forecast_points/{self.test_id}')
 
         self.measurements: Optional[dict] = None
         self.controls: dict = dict()
