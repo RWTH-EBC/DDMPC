@@ -39,21 +39,21 @@ class BopTest(System):
 
         if url is None:
             self.url = "https://api.boptest.net"  # documentation see https://colab.research.google.com/github/NREL/boptest-service/blob/develop/docs/Introduction_to_BOPTEST_Service_APIs.ipynb#scrollTo=G8f9m6M_NTkg
-            self.test_id = requests.post(urljoin(self.url, url='testcases/' + test_case + '/select')).json()['testid']
+            self.test_id = "/" + requests.post(urljoin(self.url, url='testcases/' + test_case + '/select')).json()['testid']
         else:
             self.url = url
             self.test_id = ''
 
         # documentation of API see https://ibpsa.github.io/project1-boptest/docs-userguide/api.html
         # key points of documentation implemented as comments in this code
-        self.url_advance:           str = urljoin(self.url, url=f'advance/{self.test_id}')
-        self.url_inputs:            str = urljoin(self.url, url=f'inputs/{self.test_id}')
-        self.url_measurements:      str = urljoin(self.url, url=f'measurements/{self.test_id}')
-        self.url_step:              str = urljoin(self.url, url=f'step/{self.test_id}')
-        self.url_initialize:        str = urljoin(self.url, url=f'initialize/{self.test_id}')
-        self.url_scenario:          str = urljoin(self.url, url=f'scenario/{self.test_id}')
-        self.url_forecast:          str = urljoin(self.url, url=f'forecast/{self.test_id}')
-        self.url_forecast_points:   str = urljoin(self.url, url=f'forecast_points/{self.test_id}')
+        self.url_advance:           str = urljoin(self.url, url=f'advance{self.test_id}')
+        self.url_inputs:            str = urljoin(self.url, url=f'inputs{self.test_id}')
+        self.url_measurements:      str = urljoin(self.url, url=f'measurements{self.test_id}')
+        self.url_step:              str = urljoin(self.url, url=f'step{self.test_id}')
+        self.url_initialize:        str = urljoin(self.url, url=f'initialize{self.test_id}')
+        self.url_scenario:          str = urljoin(self.url, url=f'scenario{self.test_id}')
+        self.url_forecast:          str = urljoin(self.url, url=f'forecast{self.test_id}')
+        self.url_forecast_points:   str = urljoin(self.url, url=f'forecast_points{self.test_id}')
 
         self.measurements: Optional[dict] = None
         self.controls: dict = dict()
