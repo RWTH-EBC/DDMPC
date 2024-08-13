@@ -8,7 +8,6 @@ from urllib.parse import urljoin
 import requests
 import warnings
 from typing import Optional
-import json
 
 
 class BopTest(System):
@@ -18,7 +17,7 @@ class BopTest(System):
             model: Model,
             step_size: int,
             time_offset: int,
-            url: Optional[str] = None,
+            url: Optional[str] = "https://api.boptest.net",
     ):
         """
         BopTest class provides function to use BOPTEST framework
@@ -26,7 +25,7 @@ class BopTest(System):
         :param model: model of the system
         :param step_size: step size of the system
         :param time_offset: unix time stamp, 0 is 01.01.1970
-        :param url: url of server with BOPTEST framework; if none is given, BOPTEST Service API (https://api.boptest.net) is used
+        :param url: url of server with BOPTEST framework; if none is given, BOPTEST Service API is used (https://api.boptest.net)
         """
 
         super(BopTest, self).__init__(
@@ -37,7 +36,7 @@ class BopTest(System):
 
         test_case = 'bestest_hydronic_heat_pump'
 
-        if url is None:
+        if url is None or url == "https://api.boptest.net":
             self.url = "https://api.boptest.net"  # documentation see https://colab.research.google.com/github/NREL/boptest-service/blob/develop/docs/Introduction_to_BOPTEST_Service_APIs.ipynb#scrollTo=G8f9m6M_NTkg
             self.test_id = "/" + requests.post(urljoin(self.url, url='testcases/' + test_case + '/select')).json()['testid']
         else:
