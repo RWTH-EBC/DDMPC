@@ -47,6 +47,7 @@ class BopTest(System):
         self.url_scenario:          str = urljoin(self.url, url='scenario')
         self.url_forecast:          str = urljoin(self.url, url='forecast')
         self.url_forecast_points:   str = urljoin(self.url, url='forecast_points')
+        self.url_kpi:               str = urljoin(self.url, url='kpi')
 
         self.measurements: Optional[dict] = None
         self.controls: dict = dict()
@@ -181,6 +182,7 @@ class BopTest(System):
         self.url_scenario += f'/{test_id}'
         self.url_forecast += f'/{test_id}'
         self.url_forecast_points += f'/{test_id}'
+        self.url_kpi += f'/{test_id}'
 
     def read(self) -> dict:
         """
@@ -261,4 +263,4 @@ class BopTest(System):
         calculated from start time, not including warm up period
         :return:
         """
-        return requests.get(url=urljoin(self.url, 'kpi')).json()['payload']
+        return requests.get(url=self.url_kpi).json()['payload']
