@@ -152,7 +152,7 @@ class BopTest(System):
     @property
     def scenario(self):
         """returns current electricity price and time period scenario"""
-        return requests.get(url=urljoin(self.url, 'scenario')).json()
+        return requests.get(self.url_scenario).json()
 
     def advance(self):
         """Advance simulation one control step further"""
