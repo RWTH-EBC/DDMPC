@@ -18,6 +18,8 @@ class BopTest(System):
             step_size: int,
             time_offset: int,
             url: str = "https://api.boptest.net",
+            use_boptest_service: bool = True,
+            test_case: str = 'bestest_hydronic_heat_pump',
     ):
         """
         BopTest class provides function to use BOPTEST framework
@@ -26,6 +28,8 @@ class BopTest(System):
         :param step_size: step size of the system
         :param time_offset: unix time stamp, 0 is 01.01.1970
         :param url: url of server with BOPTEST framework; as default BOPTEST Service API is used (https://api.boptest.net)
+        :param use_boptest_service: set True if BOPTEST Service API should be used
+        :param test_case: define test case to be used, especially relevant for BOPTEST Service API
         """
 
         super(BopTest, self).__init__(
@@ -33,8 +37,6 @@ class BopTest(System):
             model=model,
             time_offset=time_offset
         )
-
-        self.test_case = 'bestest_hydronic_heat_pump'
 
         # documentation of API see https://ibpsa.github.io/project1-boptest/docs-userguide/api.html
         # key points of documentation implemented as comments in this code
@@ -48,6 +50,9 @@ class BopTest(System):
         self.url_forecast:          str = urljoin(self.url, url='forecast')
         self.url_forecast_points:   str = urljoin(self.url, url='forecast_points')
         self.url_kpi:               str = urljoin(self.url, url='kpi')
+
+        self.test_case: str = test_case
+        self.use_boptest_service: bool = use_boptest_service
 
         self.measurements: Optional[dict] = None
         self.controls: dict = dict()
@@ -97,7 +102,7 @@ class BopTest(System):
         """
 
         # if BOPTEST Service API is used join test id to urls
-        if self.url == "https://api.boptest.net":
+        if self.use_boptest_service:
             self.join_test_id_to_urls()
 
         # receive available control signal input point names and metadata
