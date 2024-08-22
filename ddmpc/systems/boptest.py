@@ -16,9 +16,21 @@ class BopTest(System):
             self,
             model: Model,
             step_size: int,
-            url: str,       # url of server with BOPTEST framework
             time_offset: int,
+            url: str = "https://api.boptest.net",
+            use_boptest_service: bool = True,
+            test_case: str = 'bestest_hydronic_heat_pump',
     ):
+        """
+        BopTest class provides function to use BOPTEST framework
+
+        :param model: model of the system
+        :param step_size: step size of the system
+        :param time_offset: unix time stamp, 0 is 01.01.1970
+        :param url: url of server with BOPTEST framework; as default BOPTEST Service API is used (https://api.boptest.net)
+        :param use_boptest_service: set True if BOPTEST Service API should be used
+        :param test_case: define test case to be used, especially relevant for BOPTEST Service API
+        """
 
         super(BopTest, self).__init__(
             step_size=step_size,
@@ -26,35 +38,25 @@ class BopTest(System):
             time_offset=time_offset
         )
 
-        self.url = url
-
         # documentation of API see https://ibpsa.github.io/project1-boptest/docs-userguide/api.html
         # key points of documentation implemented as comments in this code
         self.url:                   str = url
-        self.url_advance:           str = urljoin(url, url='advance')
-        self.url_inputs:            str = urljoin(url, url='inputs')
-        self.url_measurements:      str = urljoin(url, url='measurements')
-        self.url_step:              str = urljoin(url, url='step')
-        self.url_advance:           str = urljoin(url, url='advance')
-        self.url_initialize:        str = urljoin(url, url='initialize')
-        self.url_scenario:          str = urljoin(url, url='scenario')
-        self.url_forecast:          str = urljoin(url, url='forecast')
-        self.url_forecast_points:   str = urljoin(url, url='forecast_points')
+        self.url_advance:           str = urljoin(self.url, url='advance')
+        self.url_inputs:            str = urljoin(self.url, url='inputs')
+        self.url_measurements:      str = urljoin(self.url, url='measurements')
+        self.url_step:              str = urljoin(self.url, url='step')
+        self.url_initialize:        str = urljoin(self.url, url='initialize')
+        self.url_scenario:          str = urljoin(self.url, url='scenario')
+        self.url_forecast:          str = urljoin(self.url, url='forecast')
+        self.url_forecast_points:   str = urljoin(self.url, url='forecast_points')
+        self.url_kpi:               str = urljoin(self.url, url='kpi')
+
+        self.test_case: str = test_case
+        self.use_boptest_service: bool = use_boptest_service
 
         self.measurements: Optional[dict] = None
         self.controls: dict = dict()
 
-        # receive available control signal input point names and metadata
-        self.inputs = self.get(url=self.url_inputs)
-
-        # receive available sensor signal output point names and metadata
-        self.outputs = self.get(url=self.url_measurements)
-
-        # receive available forecast point names and metadata
-        self.forecast_params = self.get(url=self.url_forecast_points)
-        self.forecast_names = list(self.forecast_params.keys())
-
-        self.forecast_horizon_in_seconds = 0
 
     @staticmethod
     def get(url: str) -> dict:
@@ -99,6 +101,20 @@ class BopTest(System):
         :param active_control_layers: active control layers
         """
 
+        # if BOPTEST Service API is used join test id to urls
+        if self.use_boptest_service:
+            self.join_test_id_to_urls()
+
+        # receive available control signal input point names and metadata
+        self.inputs = self.get(url=self.url_inputs)
+
+        # receive available sensor signal output point names and metadata
+        self.outputs = self.get(url=self.url_measurements)
+
+        # receive available forecast point names and metadata
+        self.forecast_params = self.get(url=self.url_forecast_points)
+        self.forecast_names = list(self.forecast_params.keys())
+
         # set step size
         self.put(url=self.url_step, data={'step': self.step_size})
 
@@ -141,7 +157,7 @@ class BopTest(System):
     @property
     def scenario(self):
         """returns current electricity price and time period scenario"""
-        return requests.get(url=urljoin(self.url, 'scenario')).json()
+        return requests.get(self.url_scenario).json()
 
     def advance(self):
         """Advance simulation one control step further"""
@@ -152,6 +168,26 @@ class BopTest(System):
             self.time = self.measurements['time'] + self.time_offset
         except:
             pass
+
+    def join_test_id_to_urls(self):
+        """
+        In case BOPTEST Service API is used, a test id has to be joined to each url
+        Documentation of API see https://colab.research.google.com/github/NREL/boptest-service/blob/develop/docs/Introduction_to_BOPTEST_Service_APIs.ipynb#scrollTo=G8f9m6M_NTkg
+        """
+
+        # receive test id
+        test_id = requests.post(urljoin(self.url, url='testcases/' + self.test_case + '/select')).json()['testid']
+
+        # join test id to urls
+        self.url_advance += f'/{test_id}'
+        self.url_inputs += f'/{test_id}'
+        self.url_measurements += f'/{test_id}'
+        self.url_step += f'/{test_id}'
+        self.url_initialize += f'/{test_id}'
+        self.url_scenario += f'/{test_id}'
+        self.url_forecast += f'/{test_id}'
+        self.url_forecast_points += f'/{test_id}'
+        self.url_kpi += f'/{test_id}'
 
     def read(self) -> dict:
         """
@@ -232,4 +268,4 @@ class BopTest(System):
         calculated from start time, not including warm up period
         :return:
         """
-        return requests.get(url=urljoin(self.url, 'kpi')).json()['payload']
+        return requests.get(url=self.url_kpi).json()['payload']

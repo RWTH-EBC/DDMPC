@@ -158,8 +158,10 @@ model = Model(*Feature.all)         # Create a model and pass all Features to it
 system = BopTest(
     model=model,
     step_size=one_minute * 15,              # time between control steps
-    url="http://127.0.0.1:5000/",     # url of server with BOPTEST framework
     time_offset=time_offset,
+    url="https://api.boptest.net",  # url of server with BOPTEST framework, default: BOPTEST Service API
+    use_boptest_service=True,
+    test_case='bestest_hydronic_heat_pump'
 )  # initialize system
 
 
