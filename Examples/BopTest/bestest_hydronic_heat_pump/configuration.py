@@ -114,6 +114,10 @@ power_ec = Tracking(
     )
 )
 
+# creates total power consumption [W] as Tracking object
+power_aux = Tracking(Addition(b1=power_ec, b2=power_fan))
+power_tot = Tracking(Addition(b1=power_aux, b2=power_hp, name="total power hp"))
+
 # creates evaporator fan signal [1] as Tracking object
 # Tracking objects only used to "measure" further variables / for evaluation purpose
 # read name and documentation given in BOPTEST framework on
