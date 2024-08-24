@@ -39,6 +39,14 @@ class Objective:
 
         return self.cost(mx)
 
+    def get_config(self) -> dict:
+        config = dict()
+        config['feature'] = f'{self.feature.source.name}'
+        config['cost'] = self.cost.__str__()
+        config['weight'] = self.cost.weight
+
+        return config
+
 
 class Constraint:
     """ constraint for the optimization problem """
@@ -73,6 +81,14 @@ class Constraint:
 
     def __repr__(self):
         return f'Constraint(features={self.feature}, lb={self.lb}, ub={self.ub})'
+
+    def get_config(self) -> dict:
+        config = dict()
+        config['feature'] = f'{self.feature.source.name}'
+        config['lb'] = self.lb
+        config['ub'] = self.ub
+
+        return config
 
 
 class NLPVariable(ABC):
