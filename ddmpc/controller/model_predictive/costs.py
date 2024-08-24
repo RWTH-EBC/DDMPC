@@ -49,6 +49,9 @@ class Linear(Cost):
 
         return (mx - self.offset) / self.norm * self.weight
 
+    def __str__(self):
+        return f'{self.__class__.__name__}'
+
 
 class AbsoluteLinear(Cost):
     """ absolute linear cost function """
@@ -65,6 +68,9 @@ class AbsoluteLinear(Cost):
         """ the call function takes a casadi MX variable and applies the cost function to it """
 
         return mx * self.weight
+
+    def __str__(self):
+        return f'{self.__class__.__name__}'
 
 
 class Quadratic(Cost):
@@ -88,3 +94,7 @@ class Quadratic(Cost):
         """ the call function takes a casadi MX variable and applies the cost function to it """
 
         return ((mx - self.offset) / self.norm) ** 2 * self.weight
+
+    def __str__(self):
+        return f'{self.__class__.__name__}'
+
