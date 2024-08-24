@@ -262,7 +262,7 @@ class BopTest(System):
         ddmpc.utils.formatting.print_table(rows=rows)
         print()
 
-    def get_kpis(self):
+    def get_kpis(self) -> dict:
         """
         get KPIs at the end of the simulation
         calculated from start time, not including warm up period
