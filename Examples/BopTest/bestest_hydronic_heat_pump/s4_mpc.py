@@ -23,7 +23,7 @@ def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, s
         ),
         forecast_callback=system.get_forecast,
         solution_plotter=mpc_plotter,
-        show_solution_plot=True,
+        show_solution_plot=False,
         save_solution_plot=False,
         save_solution_data=True,
     )
@@ -95,7 +95,7 @@ def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, s
     kpis_df.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
 
 
-def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox:
+def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
     # regression for TAirRoom, load predictors from disc
     if config['TAirRoom_pred_type'] == 'linReg':
@@ -106,7 +106,6 @@ def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork 
     elif config['TAirRoom_pred_type'] == 'GPR':
         t_air_room_pred: GaussianProcess = load_GaussianProcess(filename=config['TAirRoom_pred_name'])
     elif config['TAirRoom_pred_type'] == 'WB':
-        # TAirRoom_pred = read_pkl(config['TAirRoom_pred_name'])
         # define white box predictor
         t_air_room_pred: WhiteBox = WhiteBox(
             inputs=[t_amb.source, TAirRoom.source, u_hp.source, rad_dir.source],
@@ -122,28 +121,24 @@ def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork 
     return t_air_room_pred
 
 
-def load_predictor_power_hp(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox:
+def load_predictor_power_hp(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
     # regression for power_hp, load predictors from disc
     if config['power_hp_pred_type'] == 'linReg':
         power_hp_pred: LinearRegression = load_LinearRegression(filename=config['power_hp_pred_name'])
-        # power_hp_pred.output = Output(power_hp)
     elif config['power_hp_pred_type'] == 'ANN':
         # load best NN trained before
         power_hp_pred: NeuralNetwork = load_NetworkTrainer(filename=config['power_hp_pred_name']).best
-        # power_hp_pred.output = Output(power_hp)
     elif config['power_hp_pred_type'] == 'GPR':
         power_hp_pred: GaussianProcess = load_GaussianProcess(filename=config['power_hp_pred_name'])
-        # power_hp_pred.output = Output(power_hp)
     elif config['power_hp_pred_type'] == 'WB':
-        # power_hp_pred = read_pkl(config['power_hp_pred_name'])
         # define white box predictor
         power_hp_pred: WhiteBox = WhiteBox(
             inputs=[u_hp.source, t_amb.source, TAirRoom.source, u_hp_logistic.source],
             output=power_hp,
             output_expression=(u_hp.source * 10000 *
                                ((TAirRoom.source + 15 - t_amb.source) / ((TAirRoom.source + 15) * 0.55))
-                               + (1110 + 500) * u_hp_logistic.source),
+                               + 1110 * u_hp_logistic.source),
             step_size=one_minute * 15,
         )
     else:
@@ -158,11 +153,11 @@ if __name__ == '__main__':
         'mpc_name': 'test',
         'scenario': 'peak_heat_day',
         'price_scenario': 'dynamic',
-        'TAirRoom_pred_type': 'GPR',                    # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
-        'TAirRoom_pred_name': 'TAirRoom_GPR',           # name of predictor file saved on disc (.pkl)
-        'power_hp_pred_type': 'GPR',                    # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
-        'power_hp_pred_name': 'powerHP_GPR_500_IP',     # name of predictor file saved on disc (.pkl)
-        'N': 48,                                        # prediction horizon
+        'TAirRoom_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
+        'TAirRoom_pred_name': 'TAirRoom_linReg',    # name of predictor file saved on disc (.pkl)
+        'power_hp_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
+        'power_hp_pred_name': 'powerHP_linReg',     # name of predictor file saved on disc (.pkl)
+        'N': 48,                                    # prediction horizon
         'solver options': {  # more solver options are set in run()
             "ipopt.max_iter": 1000,
         },
