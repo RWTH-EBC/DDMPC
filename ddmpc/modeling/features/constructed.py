@@ -13,7 +13,8 @@ class Change(Constructed):
     def __init__(
             self,
             base: Union[Source, Feature],   # either Source or Feature
-            plt_opts: Optional[PlotOptions] = None,  # Union [X, None] equals Optional[X]
+            plt_opts: Optional[PlotOptions] = None,
+            name: Optional[str] = None,  # if no name is given, it will be set as Change(<base.name>)
     ):
 
         if isinstance(base, Feature):
@@ -22,9 +23,12 @@ class Change(Constructed):
         if plt_opts is None:
             plt_opts = base.plt_opts
 
+        if name is None:
+            name = f'{self.__class__.__name__}({base.name})'
+
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({base.name})',
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -89,7 +93,7 @@ class Average(Constructed):
             self,
             name:       str,
             bases:      list[Union[Source, Feature]],
-            plt_opts:   PlotOptions,
+            plt_opts:   Optional[PlotOptions] = None,
     ):
 
         self.sources: list[Source] = list()
@@ -101,9 +105,12 @@ class Average(Constructed):
             else:
                 raise ValueError('Please only pass a list of Sources for Features!')
 
+        if plt_opts is None:
+            plt_opts = self.sources[0].plt_opts
+
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({name})',
+            name=f'{self.__class__.__name__}({name})',  # column name
             plt_opts=plt_opts,
         )
 
@@ -160,6 +167,7 @@ class RunningMean(Constructed):
             base:       Union[Source, Feature],
             n:          int,
             plt_opts:   Optional[PlotOptions] = None,
+            name: Optional[str] = None,  # if no name is given, it will be set as RunningMean(<base>, n=<n>)
     ):
 
         if isinstance(base, Feature):
@@ -168,9 +176,12 @@ class RunningMean(Constructed):
         if plt_opts is None:
             plt_opts = PlotOptions(line=fmt.line_dotted, color=fmt.grey)
 
+        if name is None:
+            name = f'{self.__class__.__name__}({base}, n={n})'
+
         Constructed.__init__(
             self,
-            name=f'RunningMean({base}, n={n})',
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -258,7 +269,7 @@ class HeatFlow(Constructed):
         # super call
         Constructed.__init__(
             self,
-            name=name,
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -336,7 +347,7 @@ class EnergyBalance(Constructed):
 
         Constructed.__init__(
             self,
-            name=name,
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -384,6 +395,7 @@ class Subtraction(Constructed):
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
             plt_opts: Optional[PlotOptions] = None,
+            name: Optional[str] = None,  # if no name is given, it will be set as Subtraction(<b1.name> - <b2.name>)
     ):
 
         if isinstance(b1, Feature):
@@ -395,9 +407,12 @@ class Subtraction(Constructed):
         if plt_opts is None:
             plt_opts = b1.plt_opts
 
+        if name is None:
+            name = f'{self.__class__.__name__}({b1.name} - {b2.name})'
+
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({b1.name} - {b2.name})',
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -450,6 +465,7 @@ class Addition(Constructed):
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
             plt_opts: Optional[PlotOptions] = None,
+            name: Optional[str] = None,  # if no name is given, it will be set as Addition(<b1.name> - <b2.name>)
     ):
 
         if isinstance(b1, Feature):
@@ -461,9 +477,12 @@ class Addition(Constructed):
         if plt_opts is None:
             plt_opts = b1.plt_opts
 
+        if name is None:
+            name = f'{self.__class__.__name__}({b1.name} + {b2.name})'
+
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({b1.name} + {b2.name})',
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -522,6 +541,7 @@ class Product(Constructed):
             b2: Union[Source, Feature],
             scale: float = 1,
             plt_opts: Optional[PlotOptions] = None,
+            name: Optional[str] = None,  # if no name is given, it will be set as Product(<b1.name> * <b2.name>)
     ):
 
         if isinstance(b1, Feature):
@@ -533,9 +553,12 @@ class Product(Constructed):
         if plt_opts is None:
             plt_opts = b1.plt_opts
 
+        if name is None:
+            name = f'{self.__class__.__name__}({b1.name} * {b2.name})'
+
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({b1.name} * {b2.name})',       # col_name
+            name=name,  # col_name
             plt_opts=plt_opts,
         )
         self.scale = scale
@@ -599,6 +622,7 @@ class Shift(Constructed):
             base:       Union[Source, Feature],
             n:          int,
             plt_opts:   Optional[PlotOptions] = None,
+            name: Optional[str] = None,  # if no name is given, it will be set as Shift(<base.name>, n=<n>)
     ):
 
         if isinstance(base, Feature):
@@ -607,9 +631,12 @@ class Shift(Constructed):
         if plt_opts is None:
             plt_opts = base.plt_opts
 
+        if name is None:
+            name = f'{self.__class__.__name__}({base.name}, n={n})'
+
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({base.name}, n={n})',
+            name=name,  # column name
             plt_opts=plt_opts,
         )
 
@@ -674,7 +701,7 @@ class TimeFunc(Constructed):
 
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({name})',
+            name=f'{self.__class__.__name__}({name})',  # column name
             plt_opts=plt_opts,
         )
 
@@ -726,7 +753,7 @@ class Func(Constructed):
 
         Constructed.__init__(
             self,
-            name=f'{self.__class__.__name__}({name})',
+            name=f'{self.__class__.__name__}({name})',  # column name
             plt_opts=plt_opts,
         )
 
