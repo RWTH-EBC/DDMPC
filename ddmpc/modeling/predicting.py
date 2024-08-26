@@ -66,6 +66,13 @@ class Input(Node):
         """returns Input([name of source]_[-k])"""
         return f'Input({self.source.name}_{-k})'
 
+    def get_config(self) -> dict:
+        config = dict()
+        config['feature'] = f'{self.source.name}'
+        config['lag'] = self.lag
+
+        return config
+
 
 class Inputs:
 
@@ -146,6 +153,12 @@ class Output(Node):
     @property
     def name(self) -> str:
         return self.col_name()
+
+    def get_config(self) -> dict:
+        config = dict()
+        config['output'] = f'{self.source.name}'
+
+        return config
 
 
 class Predictor(ABC):
