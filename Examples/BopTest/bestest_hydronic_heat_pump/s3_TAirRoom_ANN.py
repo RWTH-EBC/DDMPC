@@ -27,7 +27,12 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1},
-        trainer=trainer)
+        trainer=trainer,
+        epochs=1000,
+        batch_size=100,  # number of test samples propagated through the network at once
+        verbose=1,  # defines how the progress of the training is shown in terminal window
+        callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
+    )
     # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
     write_pkl(training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
 
@@ -40,14 +45,15 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     trainer.save(filename=f'{name}_ANN', override=True)
 
 
-def handle_training_data(training_data: TrainingData, data: DataHandler, split: dict, trainer: NetworkTrainer) -> [TrainingData, NetworkTrainer]:
+def handle_training_data(training_data: TrainingData, data: DataHandler, split: dict,
+                         trainer: NetworkTrainer | NeuralNetwork, **training_arguments) -> [TrainingData, NetworkTrainer | NeuralNetwork]:
     """
     add data to TrainingData object, shuffle and split training_data then fit trainer
 
     :param training_data: TrainingData object
     :param data: data to add to the TrainingData object
     :param split: dict in the form {'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1}
-    :param trainer: NetworkTrainer object
+    :param trainer: either NetworkTrainer or NeuralNetwork object
     """
 
     # add data to Training Data object
@@ -56,13 +62,11 @@ def handle_training_data(training_data: TrainingData, data: DataHandler, split: 
     training_data.shuffle()
     training_data.split(split['trainShare'], split['validShare'], split['testShare'])
 
-    # train all neural networks build above by passing training data and training parameters
+    # train all neural networks build above / neural network given to function
+    # by passing training data and training parameters
     trainer.fit(
         training_data=training_data,
-        epochs=1000,
-        batch_size=100,  # number of test samples propagated through the network at once
-        verbose=1,  # defines how the progress of the training is shown in terminal window
-        callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
+        **training_arguments,
     )
     return training_data, trainer
 
