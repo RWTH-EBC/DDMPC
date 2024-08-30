@@ -1,5 +1,6 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from keras.callbacks import EarlyStopping
+from s3_TAirRoom_ANN import handle_training_data
 
 """
 Train an ANN to learn the change of the power of the heat pump using the generated training data
@@ -7,17 +8,6 @@ Train an ANN to learn the change of the power of the heat pump using the generat
 
 
 def run(training_data_name: str, name: str, training_data: TrainingData):
-
-    # load DataHandler from pickle file saved in 2_generate_data
-    pid_data = load_DataHandler(f'{training_data_name}')
-
-    # add training data to Training Data object instantiated in configuration
-    # shuffle data and split into training, validation and testing sets
-    # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
-    training_data.add(pid_data)
-    training_data.shuffle()
-    training_data.split(trainShare=0.8, validShare=0.1, testShare=0.1)
-    write_pkl(training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
 
     # Create a sequential Tuner Model for hyperparameter tuning
     tuner = TunerModel(
@@ -31,16 +21,24 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     trainer = NetworkTrainer()
     trainer.build(n=1, keras_tuner=tuner)
 
-    # train all neural networks build above by passing training data and training parameters
-    # print the configuration of the best network
-    # evaluate the trained neural networks (printing, saving and plotting evaluation by default False)
-    trainer.fit(
+    # load DataHandler from pickle file saved in 2_generate_data
+    pid_data = load_DataHandler(f'{training_data_name}')
+
+    training_data, trainer = handle_training_data(
         training_data=training_data,
+        data=pid_data,
+        split={'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1},
+        trainer=trainer,
         epochs=1000,
-        batch_size=100,                 # number of test samples propagated through the network at once
-        verbose=1,                      # defines how the progress of the training is shown in terminal window
+        batch_size=100,  # number of test samples propagated through the network at once
+        verbose=1,  # defines how the progress of the training is shown in terminal window
         callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
     )
+    # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
+    write_pkl(training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
+
+    # print the configuration of the best network
+    # evaluate the trained neural networks (printing, saving and plotting evaluation by default False)
     trainer.best.sequential.summary()
     trainer.eval(training_data=training_data, show_plot=True)
 
