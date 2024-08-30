@@ -1,6 +1,7 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 import online_learning as ol
 
+
 def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, solver_options):
 
     TAirRoom.mode = TAirRoom_economic  # changes mode previously defined in configuration.py
@@ -61,13 +62,22 @@ def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, s
         online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
         online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
-        # online learning
-        if config['online_learning']['use_online_learning']:
+        # online learning room temperature
+        if config['t_online_learning']['use_online_learning']:
             ol.online_learning(
                 data=online_data,
                 predictor=t_air_room_pred,
-                split=config['online_learning']['split'] if 'split' in config['online_learning'].keys() else None,
-                **config['online_learning']['training_arguments'],
+                split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
+                **config['t_online_learning']['training_arguments'],
+            )
+
+        # online learning for power of heat pump
+        if config['p_online_learning']['use_online_learning']:
+            ol.online_learning(
+                data=online_data,
+                predictor=power_hp_pred,
+                split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
+                **config['p_online_learning']['training_arguments'],
             )
 
         # # online learning TAirRoom
@@ -162,23 +172,32 @@ if __name__ == '__main__':
         'mpc_name': 'test',
         'scenario': 'peak_heat_day',
         'price_scenario': 'dynamic',
-        'TAirRoom_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
-        'TAirRoom_pred_name': 'TAirRoom_linReg',    # name of predictor file saved on disc (.pkl)
-        'power_hp_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
-        'power_hp_pred_name': 'powerHP_linReg',     # name of predictor file saved on disc (.pkl)
-        'N': 48,                                    # prediction horizon
+        'TAirRoom_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
+        'TAirRoom_pred_name': 'TAirRoom_ANN',    # name of predictor file saved on disc (.pkl)
+        'power_hp_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
+        'power_hp_pred_name': 'powerHP_ANN',     # name of predictor file saved on disc (.pkl)
+        'N': 12,                                    # prediction horizon
         'solver options': {  # more solver options are set in run()
             "ipopt.max_iter": 1000,
         },
-        'online_learning': {
+        't_online_learning': {                      # online learning for room air temperature
             'use_online_learning': True,
             # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
             'training_arguments': {
                 'epochs': 100,
                 'batch_size': 50,
                 'verbose': 1,
-            }
-        }
+            },
+        },
+        'p_online_learning': {                      # online learning for power of heat pump
+            'use_online_learning': True,
+            # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
+            'training_arguments': {
+                'epochs': 100,
+                'batch_size': 50,
+                'verbose': 1,
+            },
+        },
     }
 
     t_pred = load_predictor_t_air_room(config)
