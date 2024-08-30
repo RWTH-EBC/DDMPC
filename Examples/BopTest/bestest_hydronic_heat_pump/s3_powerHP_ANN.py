@@ -14,6 +14,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         TunerBatchNormalizing(),            # layer to normalize inputs
         TunerDense(units=(16, 32)),              # layer can either have 4, 8 or 16 neurons
         # TunerDense(units=(4, 8), optional=True),
+        TunerRescaling(scale=1000, offset=0),
         name=name
     )
 
