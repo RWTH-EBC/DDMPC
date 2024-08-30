@@ -1,4 +1,4 @@
-import s3_TAirRoom_ANN as t_ANN
+import s3_TAirRoom_ANN as train_ann
 from typing import Optional
 from ddmpc.modeling.process_models.machine_learning import *
 from ddmpc.data_handling.storing_data import *
@@ -16,7 +16,7 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     if isinstance(predictor, NeuralNetwork):
         if not split:
             split = {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}
-        training_data, predictor = t_ANN.handle_training_data(
+        training_data, predictor = train_ann.handle_training_data(
             training_data=predictor.training_data,
             data=data,
             split=split,
