@@ -1,5 +1,5 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
-
+import online_learning as ol
 
 def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, solver_options):
 
@@ -60,6 +60,15 @@ def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, s
         # plots data and saves plot to disk (directory: /stored_data/plots/[mpc_name]/
         online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
         online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
+
+        # online learning
+        if config['online_learning']['use_online_learning']:
+            ol.online_learning(
+                data=online_data,
+                predictor=t_air_room_pred,
+                split=config['online_learning']['split'] if 'split' in config['online_learning'].keys() else None,
+                **config['online_learning']['training_arguments'],
+            )
 
         # # online learning TAirRoom
         # TAirRoom_TrainingData.add(online_data)
@@ -161,6 +170,15 @@ if __name__ == '__main__':
         'solver options': {  # more solver options are set in run()
             "ipopt.max_iter": 1000,
         },
+        'online_learning': {
+            'use_online_learning': True,
+            # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
+            'training_arguments': {
+                'epochs': 100,
+                'batch_size': 50,
+                'verbose': 1,
+            }
+        }
     }
 
     t_pred = load_predictor_t_air_room(config)
