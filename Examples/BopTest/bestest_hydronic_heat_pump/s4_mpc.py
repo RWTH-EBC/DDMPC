@@ -1,7 +1,7 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 
-def run(config, t_air_room_pred, power_hp_pred):
+def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
     TAirRoom.mode = TAirRoom_economic  # changes mode previously defined in configuration.py
     FileManager.experiment = f'{config['mpc_name']}'  # changes path data will be saved to from now on
@@ -27,6 +27,13 @@ def run(config, t_air_room_pred, power_hp_pred):
         save_solution_plot=False,
         save_solution_data=True,
     )
+
+    # store objectives and constraints in additional config that will be returned
+    additional_config = {"objectives": [], "constraints": []}
+    for objective in hhp_MPC.nlp.objectives:
+        additional_config["objectives"].append(objective.get_config())
+    for constraint in hhp_MPC.nlp.constraints:
+        additional_config["constraints"].append(constraint.get_config())
 
     # set up the system
     # if no scenario is given, given start_time and warmup_period are used to initialize the system
@@ -95,6 +102,7 @@ def run(config, t_air_room_pred, power_hp_pred):
     kpis_df = pd.DataFrame(data=kpis, index=[0])
     kpis_df.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
 
+    return kpis, additional_config
 
 def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
@@ -167,4 +175,4 @@ if __name__ == '__main__':
     t_pred = load_predictor_t_air_room(config)
     p_pred = load_predictor_power_hp(config)
 
-    run(config, t_pred, p_pred)
+    _, _ = run(config, t_pred, p_pred)
