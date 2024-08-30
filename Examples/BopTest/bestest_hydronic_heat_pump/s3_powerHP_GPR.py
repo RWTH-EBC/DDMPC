@@ -1,15 +1,21 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+from s3_TAirRoom_GPR import handle_training_data
 
 
 def run(training_data_name: str, name: str, training_data: TrainingData):
+
     pid_data = load_DataHandler(f'{training_data_name}')
 
-    training_data.add(pid_data)
-    training_data.shuffle()
-    training_data.split(0.8, 0.0, 0.2)
-
     gpr = GaussianProcess(scale=3000, normalize=True)
-    gpr.fit(training_data)
+
+    training_data, gpr = handle_training_data(
+        training_data=training_data,
+        data=pid_data,
+        split={'trainShare': 0.8, 'validShare': 0.0, 'testShare': 0.2},
+        trainer=gpr,
+    )
+    write_pkl(training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
+
     gpr.test(training_data)
     gpr.save(f'{name}_GPR_500_IP', override=True)
 
