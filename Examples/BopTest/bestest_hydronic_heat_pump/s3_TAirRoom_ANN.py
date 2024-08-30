@@ -45,7 +45,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     trainer.save(filename=f'{name}_ANN', override=True)
 
 
-def handle_training_data(training_data: TrainingData, data: DataHandler, split: dict,
+def handle_training_data(training_data: TrainingData, data: DataHandler | DataContainer, split: dict,
                          trainer: NetworkTrainer | NeuralNetwork, **training_arguments) -> [TrainingData, NetworkTrainer | NeuralNetwork]:
     """
     add data to TrainingData object, shuffle and split training_data then fit trainer
@@ -54,6 +54,7 @@ def handle_training_data(training_data: TrainingData, data: DataHandler, split: 
     :param data: data to add to the TrainingData object
     :param split: dict in the form {'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1}
     :param trainer: either NetworkTrainer or NeuralNetwork object
+    :param training_arguments: further arguments to pass on to the training
     """
 
     # add data to Training Data object
@@ -69,6 +70,7 @@ def handle_training_data(training_data: TrainingData, data: DataHandler, split: 
         **training_arguments,
     )
     return training_data, trainer
+
 
 if __name__ == '__main__':
 
