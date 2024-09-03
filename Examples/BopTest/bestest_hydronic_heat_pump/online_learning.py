@@ -11,7 +11,7 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
 
     for n in range(5):
         print('')
-    print('execute online learning')
+    print(f'execute online learning for predictor: {predictor.__str__()}')
     for n in range(5):
         print('')
 
