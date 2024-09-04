@@ -1,4 +1,5 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+from Examples.BopTest.bestest_hydronic_heat_pump.online_learning import handle_training_data_and_fit
 
 
 def run(training_data_name: str, name: str, training_data: TrainingData):
@@ -7,41 +8,19 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
 
     gpr = GaussianProcess(normalize=True)
 
-    training_data, gpr = handle_training_data(
+    gpr = handle_training_data_and_fit(
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 0.8, 'validShare': 0.0, 'testShare': 0.2},
-        trainer=gpr,
+        trainer_or_predictor=gpr,
     )
-    write_pkl(training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
+    write_pkl(gpr.training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
 
-    gpr.test(training_data=training_data)
+    gpr.test(training_data=gpr.training_data)
 
-    training_data.split(0.0, 0.0, 1.0)
-    gpr.test(training_data=training_data)
+    gpr.training_data.split(0.0, 0.0, 1.0)
+    gpr.test(training_data=gpr.training_data)
     gpr.save(f'{name}_GPR', override=True)
-
-
-def handle_training_data(training_data: TrainingData, data: DataHandler | DataContainer, split: dict,
-                         trainer: GaussianProcess) -> [TrainingData, GaussianProcess]:
-    """
-    add data to TrainingData object, shuffle and split training_data then fit trainer
-
-    :param training_data: TrainingData object
-    :param data: data to add to the TrainingData object
-    :param split: dict in the form {'trainShare': 0.8, 'validShare': 0, 'testShare': 0.2}
-    :param trainer: GaussianProcess object
-    """
-
-    # add data to Training Data object
-    # shuffle data and split into training, validation and testing sets
-    training_data.add(data)
-    training_data.shuffle()
-    training_data.split(split['trainShare'], split['validShare'], split['testShare'])
-
-    # train gpr
-    trainer.fit(training_data=training_data)
-    return training_data, trainer
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from keras.callbacks import EarlyStopping
+from Examples.BopTest.bestest_hydronic_heat_pump.online_learning import handle_training_data_and_fit
 
 """
 Train an ANN to learn the Temperature change using the generated training data
@@ -23,53 +24,27 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     # load DataHandler from pickle file saved in 2_generate_data
     pid_data = load_DataHandler(f'{training_data_name}')
 
-    training_data, trainer = handle_training_data(
+    trainer = handle_training_data_and_fit(
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1},
-        trainer=trainer,
+        trainer_or_predictor=trainer,
         epochs=1000,
         batch_size=100,  # number of test samples propagated through the network at once
-        verbose=1,  # defines how the progress of the training is shown in terminal window
+        verbose=1,  # defines how the progress of the training is shown in console
         callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
     )
+
     # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
-    write_pkl(training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
+    write_pkl(trainer.best.training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
 
     # print the configuration of the best trained network
     # evaluate the trained neural networks (printing, saving and plotting evaluation by default False)
     trainer.best.sequential.summary()
-    trainer.eval(training_data=training_data, show_plot=True)
+    trainer.eval(training_data=trainer.best.training_data, show_plot=True)
 
     # Saves all neural networks to pickle (directory: /stored_data/predictors/ )
     trainer.save(filename=f'{name}_ANN', override=True)
-
-
-def handle_training_data(training_data: TrainingData, data: DataHandler | DataContainer, split: dict,
-                         trainer: NetworkTrainer | NeuralNetwork, **training_arguments) -> [TrainingData, NetworkTrainer | NeuralNetwork]:
-    """
-    add data to TrainingData object, shuffle and split training_data then fit trainer
-
-    :param training_data: TrainingData object
-    :param data: data to add to the TrainingData object
-    :param split: dict in the form {'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1}
-    :param trainer: either NetworkTrainer or NeuralNetwork object
-    :param training_arguments: further arguments to pass on to the training
-    """
-
-    # add data to Training Data object
-    # shuffle data and split into training, validation and testing sets
-    training_data.add(data)
-    training_data.shuffle()
-    training_data.split(split['trainShare'], split['validShare'], split['testShare'])
-
-    # train all neural networks build above / neural network given to function
-    # by passing training data and training parameters
-    trainer.fit(
-        training_data=training_data,
-        **training_arguments,
-    )
-    return training_data, trainer
 
 
 if __name__ == '__main__':

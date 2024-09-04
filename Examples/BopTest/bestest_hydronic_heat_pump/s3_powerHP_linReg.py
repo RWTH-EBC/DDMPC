@@ -1,23 +1,24 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
-from s3_TAirRoom_linReg import handle_training_data
+from Examples.BopTest.bestest_hydronic_heat_pump.online_learning import handle_training_data_and_fit
+
 
 def run(training_data_name: str, name: str, training_data: TrainingData):
 
     pid_data = load_DataHandler(f'{training_data_name}')
 
     lin = LinearRegression()
-    training_data, lin = handle_training_data(
+    lin = handle_training_data_and_fit(
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 1.0, 'validShare': 0, 'testShare': 0},
-        trainer=lin,
+        trainer_or_predictor=lin,
     )
-    write_pkl(training_data, f'TrainingData_{name}_linReg', FileManager.data_dir())
+    write_pkl(lin.training_data, f'TrainingData_{name}_linReg', FileManager.data_dir())
 
-    training_data.split(0.0, 0.0, 1.0)
-    lin.test(training_data=training_data)
+    lin.training_data.split(0.0, 0.0, 1.0)
+    lin.test(training_data=lin.training_data)
 
-    lin.print_coefficients(training_data)
+    lin.print_coefficients(lin.training_data)
     lin.save(f'{name}_linReg', override=True)
 
 
