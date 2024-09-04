@@ -1,4 +1,7 @@
 from typing import Optional
+
+import keras
+
 from ddmpc.modeling.process_models.machine_learning import *
 from ddmpc.data_handling.storing_data import *
 
@@ -19,6 +22,13 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     if isinstance(predictor, NeuralNetwork):
         if not split:
             split = {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}
+
+        if 'learning_rate' in training_arguments.keys():
+            optimizer = keras.optimizers.get(predictor.sequential.optimizer)
+            optimizer.learning_rate.assign(training_arguments['learning_rate'])
+            predictor.sequential.compile(optimizer=optimizer, loss=predictor.sequential.loss)
+            del training_arguments['learning_rate']
+
         predictor = handle_training_data_and_fit(
             training_data=predictor.training_data,
             data=data,

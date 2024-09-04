@@ -180,6 +180,7 @@ if __name__ == '__main__':
             'clear_old_data': True,                 # set False if in OL the predictor should only be trained with new data
             # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
             'training_arguments': {                 # only relevant if predictor is ANN
+                'learning_rate': 1E-4,              # set learning rate for OL
                 'epochs': 100,
                 'batch_size': 50,
                 'verbose': 1,
@@ -190,6 +191,7 @@ if __name__ == '__main__':
             'clear_old_data': True,                 # set True if in OL the predictor should only be trained with new data
             # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
             'training_arguments': {                 # only relevant if predictor is ANN
+                'learning_rate': 1E-4,              # set learning rate for OL
                 'epochs': 100,
                 'batch_size': 50,
                 'verbose': 1,
