@@ -4,7 +4,7 @@ from ddmpc.data_handling.storing_data import *
 
 
 def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegression | GaussianProcess,
-                    split: Optional[dict] = None, show_plot=True, **training_arguments)\
+                    split: Optional[dict] = None, clear_old_data: bool = True, show_plot: bool = True, **training_arguments)\
         -> NeuralNetwork | LinearRegression | GaussianProcess:
 
     for n in range(5):
@@ -12,6 +12,9 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     print(f'execute online learning for predictor: {predictor.__str__()}')
     for n in range(5):
         print('')
+
+    if clear_old_data:
+        predictor.training_data.clear()
 
     if isinstance(predictor, NeuralNetwork):
         if not split:
@@ -49,6 +52,7 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     predictor.test(predictor.training_data, show_plot=show_plot)
 
     return predictor
+
 
 def handle_training_data_and_fit(training_data: TrainingData, data: DataHandler | DataContainer, split: dict,
                                  trainer_or_predictor: NetworkTrainer | NeuralNetwork | LinearRegression | GaussianProcess,

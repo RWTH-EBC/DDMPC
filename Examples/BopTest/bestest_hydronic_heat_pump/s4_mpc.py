@@ -76,6 +76,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
                 data=online_data,
                 predictor=t_air_room_pred,
                 split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
+                clear_old_data=config['t_online_learning']['clear_old_data'],
                 **config['t_online_learning']['training_arguments'],
             )
 
@@ -85,6 +86,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
                 data=online_data,
                 predictor=power_hp_pred,
                 split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
+                clear_old_data=config['p_online_learning']['clear_old_data'],
                 **config['p_online_learning']['training_arguments'],
             )
 
@@ -105,6 +107,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
     kpis_df.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
 
     return kpis, additional_config
+
 
 def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
@@ -164,16 +167,17 @@ if __name__ == '__main__':
         'mpc_name': 'test',
         'scenario': 'peak_heat_day',
         'price_scenario': 'dynamic',
-        'TAirRoom_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
-        'TAirRoom_pred_name': 'TAirRoom_linReg',    # name of predictor file saved on disc (.pkl)
-        'power_hp_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
-        'power_hp_pred_name': 'powerHP_linReg',     # name of predictor file saved on disc (.pkl)
+        'TAirRoom_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
+        'TAirRoom_pred_name': 'TAirRoom_ANN',    # name of predictor file saved on disc (.pkl)
+        'power_hp_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
+        'power_hp_pred_name': 'powerHP_ANN',     # name of predictor file saved on disc (.pkl)
         'N': 48,                                    # prediction horizon
-        'solver_options': {  # more solver options are set in run()
+        'solver_options': {                         # more solver options are set in run()
             "ipopt.max_iter": 1000,
         },
         't_online_learning': {                      # online learning for room air temperature
             'use_online_learning': True,            # set False if online learning should not be used
+            'clear_old_data': True,                 # set False if in OL the predictor should only be trained with new data
             # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
             'training_arguments': {                 # only relevant if predictor is ANN
                 'epochs': 100,
@@ -183,6 +187,7 @@ if __name__ == '__main__':
         },
         'p_online_learning': {                      # online learning for power of heat pump
             'use_online_learning': True,            # set False if online learning should not be used
+            'clear_old_data': True,                 # set True if in OL the predictor should only be trained with new data
             # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
             'training_arguments': {                 # only relevant if predictor is ANN
                 'epochs': 100,
