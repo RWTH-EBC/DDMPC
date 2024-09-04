@@ -1,6 +1,6 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from keras.callbacks import EarlyStopping
-from Examples.BopTest.bestest_hydronic_heat_pump.training import handle_training_data_and_fit
+from ddmpc.modeling.process_models.machine_learning.training import handle_training_data_and_fit
 
 """
 Train an ANN to learn the Temperature change using the generated training data

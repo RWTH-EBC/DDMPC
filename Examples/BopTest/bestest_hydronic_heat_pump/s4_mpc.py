@@ -1,5 +1,5 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
-import training as training
+from ddmpc.modeling.process_models.machine_learning import training
 
 
 def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
