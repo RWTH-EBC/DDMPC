@@ -1,5 +1,5 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
-import online_learning as ol
+import training as training
 
 
 def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
@@ -72,7 +72,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
         # online learning room temperature
         if config['t_online_learning']['use_online_learning']:
-            ol.online_learning(
+            training.online_learning(
                 data=online_data,
                 predictor=t_air_room_pred,
                 split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
@@ -81,7 +81,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
         # online learning for power of heat pump
         if config['p_online_learning']['use_online_learning']:
-            ol.online_learning(
+            training.online_learning(
                 data=online_data,
                 predictor=power_hp_pred,
                 split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,

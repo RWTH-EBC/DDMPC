@@ -1,5 +1,5 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
-from Examples.BopTest.bestest_hydronic_heat_pump.online_learning import handle_training_data_and_fit
+from Examples.BopTest.bestest_hydronic_heat_pump.training import handle_training_data_and_fit
 
 
 def run(training_data_name: str, name: str, training_data: TrainingData):
