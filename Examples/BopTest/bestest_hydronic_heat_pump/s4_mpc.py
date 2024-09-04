@@ -72,7 +72,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
         # online learning room temperature
         if config['t_online_learning']['use_online_learning']:
-            training.online_learning(
+            t_air_room_pred = training.online_learning(
                 data=online_data,
                 predictor=t_air_room_pred,
                 split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
@@ -81,7 +81,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
         # online learning for power of heat pump
         if config['p_online_learning']['use_online_learning']:
-            training.online_learning(
+            power_hp_pred = training.online_learning(
                 data=online_data,
                 predictor=power_hp_pred,
                 split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
