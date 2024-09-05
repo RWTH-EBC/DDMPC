@@ -1,17 +1,17 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 
-def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, solver_options):
+def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
     TAirRoom.mode = TAirRoom_economic  # changes mode previously defined in configuration.py
-    FileManager.experiment = f'{mpc_name}'  # changes path data will be saved to from now on
+    FileManager.experiment = f'{config['mpc_name']}'  # changes path data will be saved to from now on
 
     """ Initialize Model Predictive Controller """
     hhp_MPC = ModelPredictive(
         step_size=one_minute * 15,  # step size of controller
         nlp=NLP(                    # non linear problem
             model=model,
-            N=N,                    # prediction horizon
+            N=config['N'],                    # prediction horizon
             objectives=[            # objective function
                 Objective(feature=TAirRoom, cost=Quadratic(weight=20)),
                 Objective(feature=costs_el, cost=Linear(weight=1)),
@@ -28,16 +28,24 @@ def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, s
         save_solution_data=True,
     )
 
+    # store objectives and constraints in additional config that will be returned
+    additional_config = {"objectives": [], "constraints": []}
+    for objective in hhp_MPC.nlp.objectives:
+        additional_config["objectives"].append(objective.get_config())
+    for constraint in hhp_MPC.nlp.constraints:
+        additional_config["constraints"].append(constraint.get_config())
+
     # set up the system
     # if no scenario is given, given start_time and warmup_period are used to initialize the system
     # otherwise the system is initialized based on the scenario-parameters (predefined in BOPTEST framework)
     system.setup(
-        scenario={'electricity_price': price_scenario,
-                  'time_period': scenario},
+        scenario={'electricity_price': config['price_scenario'],
+                  'time_period': config['scenario']},
         active_control_layers={"oveHeaPumY_activate": 1},
     )
 
     # more solver options are set in config in __main__
+    solver_options: dict = config['solver_options']
     solver_options.update({
         "verbose": False,
         "ipopt.print_level": 2,
@@ -94,6 +102,7 @@ def run(mpc_name, scenario, price_scenario, t_air_room_pred, power_hp_pred, N, s
     kpis_df = pd.DataFrame(data=kpis, index=[0])
     kpis_df.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
 
+    return kpis, additional_config
 
 def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
@@ -158,7 +167,7 @@ if __name__ == '__main__':
         'power_hp_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
         'power_hp_pred_name': 'powerHP_linReg',     # name of predictor file saved on disc (.pkl)
         'N': 48,                                    # prediction horizon
-        'solver options': {  # more solver options are set in run()
+        'solver_options': {  # more solver options are set in run()
             "ipopt.max_iter": 1000,
         },
     }
@@ -166,5 +175,4 @@ if __name__ == '__main__':
     t_pred = load_predictor_t_air_room(config)
     p_pred = load_predictor_power_hp(config)
 
-    run(config['mpc_name'], config['scenario'], config['price_scenario'], t_pred, p_pred, config['N'],
-        config['solver options'])
+    _, _ = run(config, t_pred, p_pred)
