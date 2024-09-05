@@ -1,4 +1,5 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
+from ddmpc.modeling.process_models.machine_learning import training
 
 
 def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
@@ -69,22 +70,25 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
         online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
         online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
-        # # online learning TAirRoom
-        # TAirRoom_TrainingData.add(online_data)
-        # TAirRoom_TrainingData.shuffle()
-        # TAirRoom_TrainingData.split(0.7, 0.15, 0.15)
-        # TAirRoom_pred.fit(
-        #     training_data=TAirRoom_TrainingData,
-        #     epochs=100,
-        #     batch_size=50,
-        #     verbose=1,
-        # )
-        # TAirRoom_pred.test(training_data=TAirRoom_TrainingData, show_plot=True)
-        # power_hp_TrainingData.add(online_data)
-        # power_hp_TrainingData.shuffle()
-        # power_hp_TrainingData.split(0.8, 0, 0.2)
-        # power_hp_gpr.fit(training_data=power_hp_TrainingData)
-        # power_hp_gpr.test(training_data=power_hp_TrainingData)
+        # online learning room temperature
+        if config['t_online_learning']['use_online_learning']:
+            t_air_room_pred = training.online_learning(
+                data=online_data,
+                predictor=t_air_room_pred,
+                split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
+                clear_old_data=config['t_online_learning']['clear_old_data'],
+                **config['t_online_learning']['training_arguments'],
+            )
+
+        # online learning for power of heat pump
+        if config['p_online_learning']['use_online_learning']:
+            power_hp_pred = training.online_learning(
+                data=online_data,
+                predictor=power_hp_pred,
+                split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
+                clear_old_data=config['p_online_learning']['clear_old_data'],
+                **config['p_online_learning']['training_arguments'],
+            )
 
         # concat data frame of current repetition to data frame of previous iterations if existing
         if df is None:
@@ -103,6 +107,7 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
     kpis_df.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
 
     return kpis, additional_config
+
 
 def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
@@ -162,13 +167,35 @@ if __name__ == '__main__':
         'mpc_name': 'test',
         'scenario': 'peak_heat_day',
         'price_scenario': 'dynamic',
-        'TAirRoom_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
-        'TAirRoom_pred_name': 'TAirRoom_linReg',    # name of predictor file saved on disc (.pkl)
-        'power_hp_pred_type': 'linReg',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
-        'power_hp_pred_name': 'powerHP_linReg',     # name of predictor file saved on disc (.pkl)
+        'TAirRoom_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
+        'TAirRoom_pred_name': 'TAirRoom_ANN',    # name of predictor file saved on disc (.pkl)
+        'power_hp_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
+        'power_hp_pred_name': 'powerHP_ANN',     # name of predictor file saved on disc (.pkl)
         'N': 48,                                    # prediction horizon
-        'solver_options': {  # more solver options are set in run()
+        'solver_options': {                         # more solver options are set in run()
             "ipopt.max_iter": 1000,
+        },
+        't_online_learning': {                      # online learning for room air temperature
+            'use_online_learning': True,            # set False if online learning should not be used
+            'clear_old_data': True,                 # set False if in OL the predictor should only be trained with new data
+            # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
+            'training_arguments': {                 # only relevant if predictor is ANN
+                'learning_rate': 1E-4,              # set learning rate for OL
+                'epochs': 100,
+                'batch_size': 50,
+                'verbose': 1,
+            },
+        },
+        'p_online_learning': {                      # online learning for power of heat pump
+            'use_online_learning': True,            # set False if online learning should not be used
+            'clear_old_data': True,                 # set True if in OL the predictor should only be trained with new data
+            # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
+            'training_arguments': {                 # only relevant if predictor is ANN
+                'learning_rate': 1E-4,              # set learning rate for OL
+                'epochs': 100,
+                'batch_size': 50,
+                'verbose': 1,
+            },
         },
     }
 

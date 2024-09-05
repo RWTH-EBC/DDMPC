@@ -3,7 +3,7 @@ from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 
 def run(training_data_name: str, name: str, training_data: TrainingData):
 
-    TAirRoom_pred = WhiteBox(
+    wb = WhiteBox(
         inputs=[t_amb.source, TAirRoom.source, u_hp.source, rad_dir.source],
         output=TAirRoom_change,
         output_expression=(one_minute * 15 / 70476480) *
@@ -16,8 +16,8 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     training_data.add(pid_data)
     training_data.split(0., 0., 1)
 
-    TAirRoom_pred.test(training_data=training_data)
-    # write_pkl(TAirRoom_pred,f'{name}_WB')
+    wb.test(training_data=training_data)
+    #wb.save(f'{name}_WB', override=True)
 
 
 if __name__ == '__main__':
