@@ -4,19 +4,20 @@ the control actions.
 
 A brief explanation of the most important modules of the **ddmpc** package:
 
-- **systems**: everything to simulate building energy systems. (FMUSystem, BopTest, ...) 
-- **controller**: contains the core controller functionalities. (PID, MPC, ...) 
-- **modeling**: modules for modeling, feature mapping and data handling. Simulation interface can be accessed via abstract system class
-- **utils**: utilities for formatting, plotting and pickle handling.
+- **controller**: contains the core controller functionalities (PID, MPC, ...), cost types (Linear, AbsoluteLinear, Quadratic) and further classes to construct the NLP 
+- **data_handling**: modules for storing, analysis, linearity detection and processing of training data
+- **modeling**: modules for modeling, feature mapping and predicting, including OL. Different predictors available ML models (ANN, GPR, linReg) as well as physics based
+- **systems**: everything to simulate building energy systems. Simulation interface can be accessed via abstract system class. Concrete implementation for FMUSystem and BopTest framework. 
+- **utils**: utilities for formatting, plotting, logging, pickle handling etc as well as setting modes for controlled features.
 
 
 # Step by step manual:
 
 1. Create new folder for the system to be controlled
-2. Create a **configuration** file, defining the system, the causalities and the variable mapping
-3. Define the training strategy as displayed in **2_generate_data**
-4. Define the process models (ANNs, GPRs, PhysicsBased, ...) to be used in **3_train**
-5. Configure the MPC and the online learning loop in **4_mpc**
+2. Create a **configuration** file, defining the system, the causalities and the variable mapping. Further configurations like modes for controlled features or plotting formats can be defined as well.
+3. Define the training strategy and create training data by running the system with a baseline controller as displayed in **s2_generate_data** in Examples
+4. Define the process models separately for each controlled feature (ANNs, GPRs, linReg, physics based) and fit the model with the generated training data (see e.g. **s3_TAirRoom_** in Examples)
+5. Configure the MPC, define the NLP and run the system with or without online learning (see **s4_mpc** in Examples)
 
 # Publications
 To cite, please use:
