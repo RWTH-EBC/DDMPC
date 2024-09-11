@@ -22,10 +22,10 @@ class TunerLayer:
 
 class TunerDense(TunerLayer):
 
-    def __init__(self, units: tuple = (8, 16,), activations: tuple = ('sigmoid',), optional: bool = False):
+    def __init__(self, units: tuple = (32,), activations: tuple = ('softplus',), optional: bool = False):
         """
-        :param units: Tuple with the number of neurons the layer can have. Default of 8 or 16 neurons
-        :param activations: Tuple with activation functions to pick from. Default: sigmoid
+        :param units: Tuple with the number of neurons the layer can have. Default of 32 neurons
+        :param activations: Tuple with activation functions to pick from. Default: softplus
         :param optional: Is the layer optional?
         """
         super().__init__(optional=optional)
