@@ -12,7 +12,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     # Create a sequential Tuner Model for hyperparameter tuning
     tuner = TunerModel(
         TunerBatchNormalizing(),  # layer to normalize inputs
-        TunerDense(units=(4, 8, 16)),  # layer can either have 4, 8 or 16 neurons
+        TunerDense(units=(32,), activations=('softplus',)),  # layer has 32 neurons
         # TunerDense(units=(4, 8), optional=True),
         name=name
     )
@@ -29,8 +29,8 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         data=pid_data,
         split={'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1},
         trainer_or_predictor=trainer,
-        epochs=1000,
-        batch_size=100,  # number of test samples propagated through the network at once
+        epochs=10000,
+        batch_size=32,  # number of test samples propagated through the network at once
         verbose=1,  # defines how the progress of the training is shown in console
         callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
     )
