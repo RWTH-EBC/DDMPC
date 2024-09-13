@@ -1,5 +1,6 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from ddmpc.modeling.process_models.machine_learning import training
+import numpy as np
 
 
 def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
@@ -103,6 +104,26 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
     # obtain / calculate kpis from system (calculated from start_time, not including warm_up period)
     # put kpis in data frame and save this to file kpis.csv (directory: /stored_data/[mpc_name]/ )
     kpis = system.get_kpis()
+
+    # calculate percentage of successful runs
+    success = 0
+    count = 0
+    for element in df['success']:
+        if not np.isnan(element):     # don't take into account NaN elements at the beginning
+            count += 1
+            if element is True:
+                success += 1
+    kpis['successful_runs'] = success / count
+
+    # calculate mean runtime of solver
+    total_runtime = 0
+    count = 0
+    for element in df['runtime']:
+        if not np.isnan(element):  # don't take into account NaN elements at the beginning
+            count += 1
+            total_runtime += element
+    kpis['runtime_mean'] = total_runtime / count
+
     kpis_df = pd.DataFrame(data=kpis, index=[0])
     kpis_df.to_csv(str(Path(FileManager.experiment_dir(), 'kpis.csv')), index=False)
 
