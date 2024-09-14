@@ -176,7 +176,6 @@ class Predictor(ABC):
         self.output:            Output = output
 
         self.step_size:         int = step_size
-        self.training_data = None
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.output} - {len(self.inputs)} Inputs)'

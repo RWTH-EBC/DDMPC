@@ -99,8 +99,6 @@ class NeuralNetwork(Predictor):
         assert self.sequential is not None, 'Please call build_sequential() before fitting.'
         assert training_data.totalSampleCount > 0, 'The TrainingData does not contain any samples.'
 
-        self.training_data = training_data
-
         self.sequential.fit(
             x=training_data.xTrain.astype(np.float32),
             y=training_data.yTrain.astype(np.float32),

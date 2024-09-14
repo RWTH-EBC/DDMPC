@@ -47,7 +47,6 @@ class GaussianProcess(Predictor):
         self.inputs = training_data.inputs
         self.output = training_data.output
         self.step_size = training_data.step_size
-        self.training_data = training_data
 
         x_train = training_data.xTrain
         y_train = training_data.yTrain / self.scale
