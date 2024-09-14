@@ -25,7 +25,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     # load DataHandler from pickle file saved in 2_generate_data
     pid_data = load_DataHandler(f'{training_data_name}')
 
-    trainer = handle_training_data_and_fit(
+    trainer, training_data = handle_training_data_and_fit(
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 0.8, 'validShare': 0.1, 'testShare': 0.1},
@@ -36,12 +36,12 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
     )
     # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
-    write_pkl(trainer.best.training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
+    write_pkl(training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
 
     # print the configuration of the best network
     # evaluate the trained neural networks (printing, saving and plotting evaluation by default False)
     trainer.best.sequential.summary()
-    trainer.eval(training_data=trainer.best.training_data, show_plot=True)
+    trainer.eval(training_data=training_data, show_plot=True)
 
     # Saves all neural networks to pickle (directory: /stored_data/predictors/ )
     trainer.save(filename=f'{name}_ANN', override=True)

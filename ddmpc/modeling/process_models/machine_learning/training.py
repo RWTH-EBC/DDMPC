@@ -6,9 +6,9 @@ from ddmpc.modeling.process_models.machine_learning import *
 from ddmpc.data_handling.storing_data import *
 
 
-def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegression | GaussianProcess,
+def online_learning(training_data: TrainingData, data: DataContainer, predictor: NeuralNetwork | LinearRegression | GaussianProcess,
                     split: Optional[dict] = None, clear_old_data: bool = True, show_plot: bool = True, **training_arguments)\
-        -> NeuralNetwork | LinearRegression | GaussianProcess:
+        -> [NeuralNetwork | LinearRegression | GaussianProcess, TrainingData]:
 
     for n in range(5):
         print('')
@@ -17,7 +17,7 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
         print('')
 
     if clear_old_data:
-        predictor.training_data.clear()
+        training_data.clear()
 
     if isinstance(predictor, NeuralNetwork):
         if not split:
@@ -29,8 +29,8 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
             predictor.sequential.compile(optimizer=optimizer, loss=predictor.sequential.loss)
             del training_arguments['learning_rate']
 
-        predictor = handle_training_data_and_fit(
-            training_data=predictor.training_data,
+        predictor, training_data = handle_training_data_and_fit(
+            training_data=training_data,
             data=data,
             split=split,
             trainer_or_predictor=predictor,
@@ -40,8 +40,8 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     elif isinstance(predictor, GaussianProcess):
         if not split:
             split = {'trainShare': 0.8, 'validShare': 0, 'testShare': 0.2}
-        predictor = handle_training_data_and_fit(
-            training_data=predictor.training_data,
+        predictor, training_data = handle_training_data_and_fit(
+            training_data=training_data,
             data=data,
             split=split,
             trainer_or_predictor=predictor,
@@ -50,8 +50,8 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     elif isinstance(predictor, LinearRegression):
         if not split:
             split = {'trainShare': 1.0, 'validShare': 0, 'testShare': 0}
-        predictor = handle_training_data_and_fit(
-            training_data=predictor.training_data,
+        predictor, training_data = handle_training_data_and_fit(
+            training_data=training_data,
             data=data,
             split=split,
             trainer_or_predictor=predictor,
@@ -59,14 +59,14 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
     else:
         raise TypeError('predictor has to be of type NeuralNetwork, GaussianProcess or LinearRegression')
 
-    predictor.test(predictor.training_data, show_plot=show_plot)
+    predictor.test(training_data, show_plot=show_plot)
 
-    return predictor
+    return predictor, training_data
 
 
 def handle_training_data_and_fit(training_data: TrainingData, data: DataHandler | DataContainer, split: dict,
                                  trainer_or_predictor: NetworkTrainer | NeuralNetwork | LinearRegression | GaussianProcess,
-                                 **training_arguments) -> [NetworkTrainer | NeuralNetwork | LinearRegression | GaussianProcess]:
+                                 **training_arguments) -> [NetworkTrainer | NeuralNetwork | LinearRegression | GaussianProcess, TrainingData]:
     """
     add data to, shuffle and split training_data, then fit trainer / predictor
 
@@ -90,4 +90,4 @@ def handle_training_data_and_fit(training_data: TrainingData, data: DataHandler 
         training_data=training_data,
         **training_arguments,
     )
-    return trainer_or_predictor
+    return trainer_or_predictor, training_data

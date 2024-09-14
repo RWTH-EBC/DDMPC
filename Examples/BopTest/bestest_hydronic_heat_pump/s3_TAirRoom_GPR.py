@@ -8,18 +8,18 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
 
     gpr = GaussianProcess(normalize=True)
 
-    gpr = handle_training_data_and_fit(
+    gpr, training_data = handle_training_data_and_fit(
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 0.8, 'validShare': 0.0, 'testShare': 0.2},
         trainer_or_predictor=gpr,
     )
-    write_pkl(gpr.training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
+    write_pkl(training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
 
-    gpr.test(training_data=gpr.training_data)
+    gpr.test(training_data=training_data)
 
-    gpr.training_data.split(0.0, 0.0, 1.0)
-    gpr.test(training_data=gpr.training_data)
+    training_data.split(0.0, 0.0, 1.0)
+    gpr.test(training_data=training_data)
     gpr.save(f'{name}_GPR', override=True)
 
 

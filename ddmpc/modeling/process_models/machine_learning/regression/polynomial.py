@@ -107,4 +107,3 @@ def load_LinearRegression(filename: str, folder: str = None) -> LinearRegression
     assert isinstance(lr, LinearRegression), 'Wrong type loaded!'
 
     return lr
-

@@ -7,18 +7,18 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
     pid_data = load_DataHandler(f'{training_data_name}')
 
     lin = LinearRegression()
-    lin = handle_training_data_and_fit(
+    lin, training_data = handle_training_data_and_fit(
         training_data=training_data,
         data=pid_data,
         split={'trainShare': 1.0, 'validShare': 0, 'testShare': 0},
         trainer_or_predictor=lin,
     )
-    write_pkl(lin.training_data, f'TrainingData_{name}_linReg', FileManager.data_dir())
+    write_pkl(training_data, f'TrainingData_{name}_linReg', FileManager.data_dir())
 
-    lin.training_data.split(0.0, 0.0, 1.0)
-    lin.test(training_data=lin.training_data)
+    training_data.split(0.0, 0.0, 1.0)
+    lin.test(training_data=training_data)
 
-    lin.print_coefficients(lin.training_data)
+    lin.print_coefficients(training_data)
     lin.save(f'{name}_linReg', override=True)
 
 
