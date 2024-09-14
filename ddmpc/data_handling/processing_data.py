@@ -513,6 +513,18 @@ class TrainingData:
         print(f'\tshares:           {self.sampleShares}')
 
 
+def load_TrainingData(filename: str, folder: str = None) -> TrainingData:
+
+    if folder is None:
+        folder = ''
+
+    td = read_pkl(filename, str(Path(file_manager.data_dir(), folder)))
+
+    assert isinstance(td, TrainingData), 'Wrong type loaded!'
+
+    return td
+
+
 def delete_repetitions(
         data:                   Union[DataContainer, DataHandler, list[DataContainer]],
         bases:                  list[Union[Source, Feature]],

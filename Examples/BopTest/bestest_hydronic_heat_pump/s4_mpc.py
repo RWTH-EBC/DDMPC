@@ -1,5 +1,6 @@
 from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from ddmpc.modeling.process_models.machine_learning import training
+from ddmpc.data_handling.processing_data import load_TrainingData
 import numpy as np
 
 
@@ -71,9 +72,14 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
         online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
         online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
+
         # online learning room temperature
         if config['t_online_learning']['use_online_learning']:
-            t_air_room_pred = training.online_learning(
+            if repetition == 0:
+                t_training_data = load_TrainingData(f'TrainingData_{config['TAirRoom_pred_name']}')
+
+            t_air_room_pred, t_training_data = training.online_learning(
+                training_data=t_training_data,
                 data=online_data,
                 predictor=t_air_room_pred,
                 split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
@@ -83,7 +89,11 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
 
         # online learning for power of heat pump
         if config['p_online_learning']['use_online_learning']:
-            power_hp_pred = training.online_learning(
+            if repetition == 0:
+                p_training_data = load_TrainingData(f'TrainingData_{config['power_hp_pred_name']}')
+
+            power_hp_pred, p_training_data = training.online_learning(
+                training_data=p_training_data,
                 data=online_data,
                 predictor=power_hp_pred,
                 split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
