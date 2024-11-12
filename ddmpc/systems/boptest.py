@@ -2,6 +2,7 @@ import pandas as pd
 
 import ddmpc.utils.formatting
 from ddmpc.modeling.modeling import Model
+from ddmpc.modeling.features.constructed import Constructed
 from ddmpc.systems import System
 from ddmpc.systems.exceptions import ReadingError, SimulationError
 from urllib.parse import urljoin
@@ -197,8 +198,14 @@ class BopTest(System):
 
         # the electricity prices are not contained in the measurements, so we have to access them through the forecast
         forecast = self.get_forecast(horizon_in_seconds=1)
-        columns_to_extract = ['PriceElectricPowerConstant', 'PriceElectricPowerDynamic',
-                              'PriceElectricPowerHighlyDynamic']
+
+        # extract only columns from forecast that are used in the model
+        columns_to_extract = list()
+        for disturbance in self.model.disturbances:
+            if not isinstance(disturbance.source, Constructed):
+                if disturbance.forecast_name == disturbance.source.read_name:
+                    columns_to_extract.append(disturbance.forecast_name)
+
         forecast_dict = {column: forecast.at[0, column] for column in columns_to_extract}
         self.measurements.update(forecast_dict)
 
