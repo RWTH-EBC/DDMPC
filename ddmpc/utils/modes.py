@@ -76,12 +76,23 @@ class Steady(Mode):
             day_end: int = 16,
             day_target: float = 273.15 + 20,
             night_target: float = 273.15 + 18,
+            weekend: bool = True,
     ):
+        """
+        steady set point for day and night
+
+        :param day_start: start time of day
+        :param day_end: end time of day
+        :param day_target: set point during the day (day_start until day_end)
+        :param night_target: set point during the night
+        :param weekend: set True if on weekend days the night boundaries should be used
+        """
 
         super(Steady, self).__init__(day_start=day_start, day_end=day_end)
 
         self.day_target = day_target
         self.night_target = night_target
+        self.weekend: bool = weekend
 
     def error(self, value: float, time: int) -> float:
         """ Returns the control error at a given time"""
@@ -102,7 +113,7 @@ class Steady(Mode):
         returns day_target only during weekdays, otherwise night_target
         """
 
-        if self._weekend(time):
+        if self._weekend(time) and self.weekend:
             return self.night_target
 
         if self._day(time):
@@ -127,6 +138,7 @@ class Random(Mode):
             day_ub: float = 273.15 + 21,
             night_ub: float = 273.15 + 24,
             interval: int = 60 * 60 * 4,
+            weekend: bool = True,
     ):
         """
         random sequence of set points between given bounds
@@ -138,6 +150,7 @@ class Random(Mode):
         :param day_ub: upper bound for day (day_start until day_end)
         :param night_ub: upper bound for night
         :param interval: time interval between two randomly generated targets / set points
+        :param weekend: set True if on weekend days the night boundaries should be used
         """
         super(Random, self).__init__(day_start=day_start, day_end=day_end)
 
@@ -147,6 +160,7 @@ class Random(Mode):
         self.night_ub: float = night_ub
 
         self.interval: int = interval
+        self.weekend: bool = weekend
 
         self.last_randomization: Optional[int] = None  # at initialization there hasn't been a randomization yet
         self.current_target: Optional[int] = None   # at initialization there is no current target yet
@@ -162,7 +176,7 @@ class Random(Mode):
         returns day bounds only during weekdays, otherwise night bounds
         """
 
-        if self._weekend(time):
+        if self._weekend(time) and self.weekend:
             return self.night_lb, self.night_ub
 
         if self._day(time):
@@ -229,6 +243,7 @@ class Identification(Mode):
             max_interval: int = 60 * 60 * 5,
             min_change: float = 1,
             max_change: float = 2,
+            weekend: bool = True,
     ):
         """
         random sequence of set points between given bounds in random intervals between given bounds
@@ -243,6 +258,7 @@ class Identification(Mode):
         :param max_interval: maximum time interval between two randomly generated targets / set points
         :min_change: minimum change (absolute) between two targets / set points
         :max_change: maximum change (absolute) between two targets / set points
+        :param weekend: set True if on weekend days the night boundaries should be used
         """
 
         super(Identification, self).__init__(day_start=day_start, day_end=day_end)
@@ -257,6 +273,7 @@ class Identification(Mode):
         self.interval: int = random.randrange(min_interval, max_interval)
         self.min_change: float = min_change
         self.max_change: float = max_change
+        self.weekend: bool = weekend
 
         self.last_randomization: Optional[int] = None       # at initialization there hasn't been a randomization yet
         self.current_target: Optional[int] = None           # at initialization there is no current target yet
@@ -272,7 +289,7 @@ class Identification(Mode):
         returns day bounds only during weekdays, otherwise night bounds
         """
 
-        if self._weekend(time):
+        if self._weekend(time) and self.weekend:
             return self.night_lb, self.night_ub
 
         if self._day(time):
