@@ -37,73 +37,76 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
     for constraint in hhp_MPC.nlp.constraints:
         additional_config["constraints"].append(constraint.get_config())
 
-    # set up the system
-    # if no scenario is given, given start_time and warmup_period are used to initialize the system
-    # otherwise the system is initialized based on the scenario-parameters (predefined in BOPTEST framework)
-    system.setup(
-        scenario={'electricity_price': config['price_scenario'],
-                  'time_period': config['scenario']},
-        active_control_layers={"oveHeaPumY_activate": 1},
-    )
-
-    # more solver options are set in config in __main__
-    solver_options: dict = config['solver_options']
-    solver_options.update({
-        "verbose": False,
-        "ipopt.print_level": 2,
-        "expand": True,
-    })
-
-    df = None
-
-    #  Online learning loop
-    for repetition in range(14):  # for 14 days (standard period in BOPTEST to ensure comparability)
-        # build nonlinear problem with trained models
-        # default algorithm: ipopt
-        hhp_MPC.nlp.build(
-            solver_options=solver_options, predictors=[t_air_room_pred, power_hp_pred]
+    try:
+        # set up the system
+        # if no scenario is given, given start_time and warmup_period are used to initialize the system
+        # otherwise the system is initialized based on the scenario-parameters (predefined in BOPTEST framework)
+        system.setup(
+            scenario={'electricity_price': config['price_scenario'],
+                      'time_period': config['scenario']},
+            active_control_layers={"oveHeaPumY_activate": 1},
         )
 
-        # runs the system for the given duration using the given MPC controller
-        # duration has to be dividable by step size of the system
-        # returns data frame (only current and not past data frames) in a DataContainer
-        # plots data and saves plot to disk (directory: /stored_data/plots/[mpc_name]/
-        online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
-        online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
+        # more solver options are set in config in __main__
+        solver_options: dict = config['solver_options']
+        solver_options.update({
+            "verbose": False,
+            "ipopt.print_level": 2,
+            "expand": True,
+        })
 
-        # online learning room temperature
-        if config['t_online_learning']['use_online_learning']:
-            t_air_room_pred = training.online_learning(
-                data=online_data,
-                predictor=t_air_room_pred,
-                split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
-                clear_old_data=config['t_online_learning']['clear_old_data'],
-                **config['t_online_learning']['training_arguments'],
+        df = None
+
+        #  Online learning loop
+        for repetition in range(14):  # for 14 days (standard period in BOPTEST to ensure comparability)
+            # build nonlinear problem with trained models
+            # default algorithm: ipopt
+            hhp_MPC.nlp.build(
+                solver_options=solver_options, predictors=[t_air_room_pred, power_hp_pred]
             )
 
-        # online learning for power of heat pump
-        if config['p_online_learning']['use_online_learning']:
-            power_hp_pred = training.online_learning(
-                data=online_data,
-                predictor=power_hp_pred,
-                split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
-                clear_old_data=config['p_online_learning']['clear_old_data'],
-                **config['p_online_learning']['training_arguments'],
-            )
+            # runs the system for the given duration using the given MPC controller
+            # duration has to be dividable by step size of the system
+            # returns data frame (only current and not past data frames) in a DataContainer
+            # plots data and saves plot to disk (directory: /stored_data/plots/[mpc_name]/
+            online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
+            online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
-        # concat data frame of current repetition to data frame of previous iterations if existing
-        if df is None:
-            df = online_data.df
-        else:
-            df = pd.concat([df, online_data.df], axis=0)
-    system.close()
+            # online learning room temperature
+            if config['t_online_learning']['use_online_learning']:
+                t_air_room_pred = training.online_learning(
+                    data=online_data,
+                    predictor=t_air_room_pred,
+                    split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
+                    clear_old_data=config['t_online_learning']['clear_old_data'],
+                    **config['t_online_learning']['training_arguments'],
+                )
 
-    # save data frame with data from all repetitions to file data.csv (directory: /stored_data/[mpc_name]/ )
-    df.to_csv(str(Path(FileManager.experiment_dir(), 'data.csv')))
+            # online learning for power of heat pump
+            if config['p_online_learning']['use_online_learning']:
+                power_hp_pred = training.online_learning(
+                    data=online_data,
+                    predictor=power_hp_pred,
+                    split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
+                    clear_old_data=config['p_online_learning']['clear_old_data'],
+                    **config['p_online_learning']['training_arguments'],
+                )
 
-    # obtain / calculate kpis from system (calculated from start_time, not including warm_up period)
-    # put kpis in data frame and save this to file kpis.csv (directory: /stored_data/[mpc_name]/ )
-    kpis = system.get_kpis()
+            # concat data frame of current repetition to data frame of previous iterations if existing
+            if df is None:
+                df = online_data.df
+            else:
+                df = pd.concat([df, online_data.df], axis=0)
+        system.close()
+
+        # save data frame with data from all repetitions to file data.csv (directory: /stored_data/[mpc_name]/ )
+        df.to_csv(str(Path(FileManager.experiment_dir(), 'data.csv')))
+
+        # obtain / calculate kpis from system (calculated from start_time, not including warm_up period)
+        # put kpis in data frame and save this to file kpis.csv (directory: /stored_data/[mpc_name]/ )
+        kpis = system.get_kpis()
+    finally:
+        system.stop()  # stop run if BOPTEST service is used even in case an error occurs
 
     # calculate percentage of successful runs
     success = 0
