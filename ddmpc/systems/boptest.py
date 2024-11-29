@@ -51,6 +51,7 @@ class BopTest(System):
         self.url_forecast:          str = urljoin(self.url, url='forecast')
         self.url_forecast_points:   str = urljoin(self.url, url='forecast_points')
         self.url_kpi:               str = urljoin(self.url, url='kpi')
+        self.url_stop:               str = urljoin(self.url, url='stop')
 
         self.test_case: str = test_case
         self.use_boptest_service: bool = use_boptest_service
@@ -189,6 +190,7 @@ class BopTest(System):
         self.url_forecast += f'/{test_id}'
         self.url_forecast_points += f'/{test_id}'
         self.url_kpi += f'/{test_id}'
+        self.url_stop += f'/{test_id}'
 
     def read(self) -> dict:
         """
@@ -276,3 +278,8 @@ class BopTest(System):
         :return:
         """
         return requests.get(url=self.url_kpi).json()['payload']
+
+    def stop(self):
+        if self.use_boptest_service:
+            requests.put(url=self.url_stop)
+            print('stopped BOPTEST service run successfully')
