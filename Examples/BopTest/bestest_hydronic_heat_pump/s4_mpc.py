@@ -82,6 +82,9 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
                     **config['t_online_learning']['training_arguments'],
                 )
 
+                if isinstance(t_air_room_pred, NeuralNetwork):
+                    t_air_room_pred.update_casadi_model()
+
             # online learning for power of heat pump
             if config['p_online_learning']['use_online_learning']:
                 power_hp_pred = training.online_learning(
@@ -91,6 +94,9 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
                     clear_old_data=config['p_online_learning']['clear_old_data'],
                     **config['p_online_learning']['training_arguments'],
                 )
+
+                if isinstance(power_hp_pred, NeuralNetwork):
+                    power_hp_pred.update_casadi_model()
 
             # concat data frame of current repetition to data frame of previous iterations if existing
             if df is None:
