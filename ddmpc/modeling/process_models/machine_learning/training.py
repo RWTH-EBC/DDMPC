@@ -7,10 +7,10 @@ def online_learning(data: DataContainer, predictor: NeuralNetwork | LinearRegres
                     split: Optional[dict] = None, clear_old_data: bool = True, show_plot: bool = True, **training_arguments)\
         -> NeuralNetwork | LinearRegression | GaussianProcess:
 
-    for n in range(5):
+    for n in range(3):
         print('')
     print(f'execute online learning for predictor: {predictor.__str__()}')
-    for n in range(5):
+    for n in range(3):
         print('')
 
     if clear_old_data:
