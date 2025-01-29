@@ -2,11 +2,10 @@ from Examples.BopTest.bestest_hydronic_heat_pump.configuration import *
 from keras.callbacks import EarlyStopping
 from ddmpc.modeling.process_models.machine_learning.training import handle_training_data_and_fit
 
+
 """
 Train an ANN to learn the change of the power of the heat pump using the generated training data
 """
-
-
 def run(training_data_name: str, name: str, training_data: TrainingData):
 
     # Create a sequential Tuner Model for hyperparameter tuning
@@ -33,7 +32,11 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         epochs=10000,
         batch_size=32,  # number of test samples propagated through the network at once
         verbose=1,  # defines how the progress of the training is shown in terminal window
-        callbacks=[EarlyStopping(patience=100, verbose=1, restore_best_weights=True)]
+        callbacks=[EarlyStopping(
+            patience=100,
+            verbose=1,
+            restore_best_weights=True
+        )]
     )
     # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
     write_pkl(trainer.best.training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())

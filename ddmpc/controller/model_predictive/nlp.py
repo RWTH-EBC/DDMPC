@@ -39,6 +39,9 @@ class Objective:
 
         return self.cost(mx)
 
+    def set_feature(self, feature: Feature):
+        self.feature: Feature = feature
+
     def get_config(self) -> dict:
         config = dict()
         config['feature'] = f'{self.feature.source.name}'
