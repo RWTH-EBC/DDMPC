@@ -54,7 +54,6 @@ class Layer(ABC):
         # update the dimensions to two dimensions
         self.update_dimensions()
 
-
     def __str__(self):
         attr = list()
         if hasattr(self, 'units'):
@@ -157,7 +156,6 @@ class Dense(Layer):
     """
 
     def __init__(self, layer: layers.Dense):
-
         super(Dense, self).__init__(layer)
 
         # weights and biases
@@ -168,7 +166,6 @@ class Dense(Layer):
         #     raise ValueError(f'Please check the input dimensions of this layer. Layer with error: {self.name}')
 
     def forward(self, input):
-
         # forward pass
         length = input.shape[0]
         f = self.activation(input @ self.weights + np.repeat(self.biases.reshape(1, self.biases.shape[0]),
@@ -177,7 +174,6 @@ class Dense(Layer):
         return f
 
     def inspect(self):
-
         print('Weights')
         print(self.weights)
         print('Biases')
@@ -190,11 +186,9 @@ class Dense(Layer):
 class Flatten(Layer):
 
     def __init__(self, layer: layers.Flatten):
-
         super(Flatten, self).__init__(layer)
 
     def forward(self, input):
-
         # flattens the input
         f = input[0, :]
         for row in range(1, input.shape[0]):
@@ -203,7 +197,6 @@ class Flatten(Layer):
         return f
 
     def to_keras_layer(self):
-
         return layers.Flatten()
 
 
@@ -213,7 +206,6 @@ class BatchNormalising(Layer):
     """
 
     def __init__(self, layer: layers.BatchNormalization):
-
         super(BatchNormalising, self).__init__(layer)
 
         self.weights = layer.get_weights()
@@ -230,16 +222,13 @@ class BatchNormalising(Layer):
             axis = self.config['axis'][0]
             raise ValueError(f'Dimension mismatch. Normalized axis: {axis}')
 
-
     def forward(self, input):
-
         # forward pass
         f = (input - self.mean) / (sqrt(self.var + self.epsilon)) * self.gamma + self.beta
 
         return f
 
     def inspect(self):
-
         print('gamma:')
         print(self.gamma)
         print('beta:')
@@ -252,7 +241,6 @@ class BatchNormalising(Layer):
         print(self.epsilon)
 
     def to_keras_layer(self):
-
         return layers.BatchNormalization(weights=self.weights, epsilon=self.epsilon)
 
 
@@ -346,14 +334,12 @@ class Rescaling(Layer):
         self.scale = layer.scale
 
     def forward(self, input):
-
         # forward pass
         f = input * self.scale + self.offset
 
         return f
 
     def inspect(self):
-
         print('offset:')
         print(self.offset)
         print('scale:')

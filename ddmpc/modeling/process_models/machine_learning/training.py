@@ -1,7 +1,4 @@
-from typing import Optional
-
 import keras
-
 from ddmpc.modeling.process_models.machine_learning import *
 from ddmpc.data_handling.storing_data import *
 

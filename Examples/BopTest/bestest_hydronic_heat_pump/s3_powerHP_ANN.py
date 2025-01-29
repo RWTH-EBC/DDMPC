@@ -39,7 +39,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         )]
     )
     # write data into pickle file (same directory as pid_data file: /stored_data/data/ )
-    write_pkl(trainer.best.training_data, f'TrainingData_{name}_ANN', FileManager.data_dir())
+    write_pkl(trainer.best.training_data, f'TrainingData_{name}_ANN', FileManager.data_dir(), override=True)
 
     # print the configuration of the best network
     # evaluate the trained neural networks (printing, saving and plotting evaluation by default False)

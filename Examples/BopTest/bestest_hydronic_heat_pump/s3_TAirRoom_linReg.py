@@ -13,7 +13,7 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         split={'trainShare': 1.0, 'validShare': 0, 'testShare': 0},
         trainer_or_predictor=lin,
     )
-    write_pkl(lin.training_data, f'TrainingData_{name}_linReg', FileManager.data_dir())
+    write_pkl(lin.training_data, f'TrainingData_{name}_linReg', FileManager.data_dir(), override=True)
 
     lin.training_data.split(0.0, 0.0, 1.0)
     lin.test(training_data=lin.training_data)

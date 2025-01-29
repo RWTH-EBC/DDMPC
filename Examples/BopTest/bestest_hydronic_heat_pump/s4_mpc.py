@@ -3,7 +3,7 @@ from ddmpc.modeling.process_models.machine_learning import training
 import numpy as np
 
 
-def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
+def run(config: dict, predictors: list) -> [dict, dict]:
 
     TAirRoom.mode = TAirRoom_economic  # changes mode previously defined in configuration.py
     FileManager.experiment = f'{config['mpc_name']}'  # changes path data will be saved to from now on
@@ -58,11 +58,11 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
         df = None
 
         #  Online learning loop
-        for repetition in range(14):  # for 14 days (standard period in BOPTEST to ensure comparability)
+        for repetition in range(14):  # 14 days: standard period in BOPTEST to ensure comparability
             # build nonlinear problem with trained models
             # default algorithm: ipopt
             hhp_MPC.nlp.build(
-                solver_options=solver_options, predictors=[t_air_room_pred, power_hp_pred]
+                solver_options=solver_options, predictors=predictors
             )
 
             # runs the system for the given duration using the given MPC controller
@@ -72,31 +72,18 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
             online_data = system.run(controllers=(hhp_MPC,), duration=one_day * 1)
             online_data.plot(plotter=mpc_plotter, save_plot=True, save_name=f'mpc_{repetition}.png')
 
-            # online learning room temperature
-            if config['t_online_learning']['use_online_learning']:
-                t_air_room_pred = training.online_learning(
-                    data=online_data,
-                    predictor=t_air_room_pred,
-                    split=config['t_online_learning']['split'] if 'split' in config['t_online_learning'].keys() else None,
-                    clear_old_data=config['t_online_learning']['clear_old_data'],
-                    **config['t_online_learning']['training_arguments'],
-                )
-
-                if isinstance(t_air_room_pred, NeuralNetwork):
-                    t_air_room_pred.update_casadi_model()
-
-            # online learning for power of heat pump
-            if config['p_online_learning']['use_online_learning']:
-                power_hp_pred = training.online_learning(
-                    data=online_data,
-                    predictor=power_hp_pred,
-                    split=config['p_online_learning']['split'] if 'split' in config['p_online_learning'].keys() else None,
-                    clear_old_data=config['p_online_learning']['clear_old_data'],
-                    **config['p_online_learning']['training_arguments'],
-                )
-
-                if isinstance(power_hp_pred, NeuralNetwork):
-                    power_hp_pred.update_casadi_model()
+            # online learning
+            for n, predictor_config in enumerate(config['predictors']):
+                if predictor_config['online_learning']['use_online_learning']:
+                    predictors[n] = training.online_learning(
+                        data=online_data,
+                        predictor=predictors[n],
+                        split=predictor_config['online_learning']['split'] if 'split' in predictor_config['online_learning'].keys() else None,
+                        clear_old_data=predictor_config['online_learning']['clear_old_data'],
+                        **predictor_config['online_learning']['training_arguments'],
+                    )
+                    if isinstance(predictors[n], NeuralNetwork):
+                        predictors[n].update_casadi_model()
 
             # concat data frame of current repetition to data frame of previous iterations if existing
             if df is None:
@@ -139,56 +126,45 @@ def run(config, t_air_room_pred, power_hp_pred) -> [dict, dict]:
     return kpis, additional_config
 
 
-def load_predictor_t_air_room(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
+def load_predictor(predictor_config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
 
-    # regression for TAirRoom, load predictors from disc
-    if config['TAirRoom_pred_type'] == 'linReg':
-        t_air_room_pred: LinearRegression = load_LinearRegression(filename=config['TAirRoom_pred_name'])
-    elif config['TAirRoom_pred_type'] == 'ANN':
+    # load predictors from disc
+    if predictor_config['type'] == 'linReg':
+        predictor: LinearRegression = load_LinearRegression(
+            filename=f'{predictor_config['name']}_{predictor_config['type']}')
+    elif predictor_config['type'] == 'ANN':
         # load best NN trained before
-        t_air_room_pred: NeuralNetwork = load_NetworkTrainer(filename=config['TAirRoom_pred_name']).best
-    elif config['TAirRoom_pred_type'] == 'GPR':
-        t_air_room_pred: GaussianProcess = load_GaussianProcess(filename=config['TAirRoom_pred_name'])
-    elif config['TAirRoom_pred_type'] == 'WB':
+        predictor: NeuralNetwork = load_NetworkTrainer(
+            filename=f'{predictor_config['name']}_{predictor_config['type']}').best
+    elif predictor_config['type'] == 'GPR':
+        predictor: GaussianProcess = load_GaussianProcess(
+            filename=f'{predictor_config['name']}_{predictor_config['type']}')
+    elif predictor_config['type'] == 'WB':
         # define white box predictor
-        t_air_room_pred: WhiteBox = WhiteBox(
-            inputs=[t_amb.source, TAirRoom.source, u_hp.source, rad_dir.source],
-            output=TAirRoom_change,
-            output_expression=(one_minute * 15 / 70476480) *
-                              (-15000 * (TAirRoom.source - t_amb.source) / 35
-                               + 24 * rad_dir.source + 15000 * u_hp.source),
-            step_size=one_minute * 15
-        )
+        if predictor_config['name'] == 'TAirRoom':
+            predictor: WhiteBox = WhiteBox(
+                inputs=[t_amb.source, TAirRoom.source, u_hp.source, rad_dir.source],
+                output=TAirRoom_change,
+                output_expression=(one_minute * 15 / 70476480) *
+                                  (-15000 * (TAirRoom.source - t_amb.source) / 35
+                                   + 24 * rad_dir.source + 15000 * u_hp.source),
+                step_size=one_minute * 15
+            )
+        elif predictor_config['name'] == 'powerHP':
+            predictor: WhiteBox = WhiteBox(
+                inputs=[u_hp.source, t_amb.source, TAirRoom.source, u_hp_logistic.source],
+                output=power_hp,
+                output_expression=(u_hp.source * 10000 *
+                                   ((TAirRoom.source + 15 - t_amb.source) / ((TAirRoom.source + 15) * 0.55))
+                                   + 1110 * u_hp_logistic.source),
+                step_size=one_minute * 15,
+            )
+        else:
+            raise NotImplementedError()
     else:
         raise NotImplementedError()
 
-    return t_air_room_pred
-
-
-def load_predictor_power_hp(config: dict) -> LinearRegression | NeuralNetwork | WhiteBox | GaussianProcess:
-
-    # regression for power_hp, load predictors from disc
-    if config['power_hp_pred_type'] == 'linReg':
-        power_hp_pred: LinearRegression = load_LinearRegression(filename=config['power_hp_pred_name'])
-    elif config['power_hp_pred_type'] == 'ANN':
-        # load best NN trained before
-        power_hp_pred: NeuralNetwork = load_NetworkTrainer(filename=config['power_hp_pred_name']).best
-    elif config['power_hp_pred_type'] == 'GPR':
-        power_hp_pred: GaussianProcess = load_GaussianProcess(filename=config['power_hp_pred_name'])
-    elif config['power_hp_pred_type'] == 'WB':
-        # define white box predictor
-        power_hp_pred: WhiteBox = WhiteBox(
-            inputs=[u_hp.source, t_amb.source, TAirRoom.source, u_hp_logistic.source],
-            output=power_hp,
-            output_expression=(u_hp.source * 10000 *
-                               ((TAirRoom.source + 15 - t_amb.source) / ((TAirRoom.source + 15) * 0.55))
-                               + 1110 * u_hp_logistic.source),
-            step_size=one_minute * 15,
-        )
-    else:
-        raise NotImplementedError()
-
-    return power_hp_pred
+    return predictor
 
 
 if __name__ == '__main__':
@@ -197,39 +173,46 @@ if __name__ == '__main__':
         'mpc_name': 'test',
         'scenario': 'peak_heat_day',
         'price_scenario': 'dynamic',
-        'TAirRoom_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
-        'TAirRoom_pred_name': 'TAirRoom_ANN',    # name of predictor file saved on disc (.pkl)
-        'power_hp_pred_type': 'ANN',             # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
-        'power_hp_pred_name': 'powerHP_ANN',     # name of predictor file saved on disc (.pkl)
         'N': 48,                                    # prediction horizon
         'solver_options': {                         # more solver options are set in run()
             "ipopt.max_iter": 1000,
         },
-        't_online_learning': {                      # online learning for room air temperature
-            'use_online_learning': True,            # set False if online learning should not be used
-            'clear_old_data': True,                 # set False if in OL the predictor should only be trained with new data
-            # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
-            'training_arguments': {                 # only relevant if predictor is ANN
-                'learning_rate': 1E-4,              # set learning rate for OL
-                'epochs': 100,
-                'batch_size': 50,
-                'verbose': 1,
+        'predictors': [
+            {
+                'name': 'TAirRoom',
+                'type': 'ANN',  # choose prediction type (ANN, GPR, linReg, WB) for room air temperature
+                'online_learning': {
+                    'use_online_learning': False,  # set False if online learning should not be used
+                    'clear_old_data': False,  # set False if in OL the predictor should only be trained with new data
+                    # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
+                    'training_arguments': {  # only relevant if predictor is ANN
+                        'learning_rate': 1E-4,  # set learning rate for OL
+                        'epochs': 100,
+                        'batch_size': 50,
+                        'verbose': 1,
+                    },
+                }
             },
-        },
-        'p_online_learning': {                      # online learning for power of heat pump
-            'use_online_learning': True,            # set False if online learning should not be used
-            'clear_old_data': True,                 # set True if in OL the predictor should only be trained with new data
-            # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
-            'training_arguments': {                 # only relevant if predictor is ANN
-                'learning_rate': 1E-4,              # set learning rate for OL
-                'epochs': 100,
-                'batch_size': 50,
-                'verbose': 1,
+            {
+                'name': 'powerHP',
+                'type': 'ANN',  # choose prediction type (ANN, GPR, linReg, WB) for power of heat pump
+                'online_learning': {
+                    'use_online_learning': False,  # set False if online learning should not be used
+                    'clear_old_data': False,  # set False if in OL the predictor should only be trained with new data
+                    # 'split': {'trainShare': 0.7, 'validShare': 0.15, 'testShare': 0.15}, # if split not given, default values will be used
+                    'training_arguments': {  # only relevant if predictor is ANN
+                        'learning_rate': 1E-4,  # set learning rate for OL
+                        'epochs': 100,
+                        'batch_size': 50,
+                        'verbose': 1,
+                    },
+                },
             },
-        },
+        ],
     }
 
-    t_pred = load_predictor_t_air_room(config)
-    p_pred = load_predictor_power_hp(config)
+    predictors = list()
+    for pred_config in config['predictors']:
+        predictors.append(load_predictor(pred_config))
 
-    _, _ = run(config, t_pred, p_pred)
+    _, _ = run(config, predictors)

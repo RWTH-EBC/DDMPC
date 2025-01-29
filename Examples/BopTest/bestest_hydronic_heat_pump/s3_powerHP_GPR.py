@@ -14,10 +14,10 @@ def run(training_data_name: str, name: str, training_data: TrainingData):
         split={'trainShare': 0.8, 'validShare': 0.0, 'testShare': 0.2},
         trainer_or_predictor=gpr,
     )
-    write_pkl(gpr.training_data, f'TrainingData_{name}_GPR', FileManager.data_dir())
+    write_pkl(gpr.training_data, f'TrainingData_{name}_GPR', FileManager.data_dir(), override=True)
 
     gpr.test(gpr.training_data)
-    gpr.save(f'{name}_GPR_500_IP', override=True)
+    gpr.save(f'{name}_GPR', override=True)
 
 
 if __name__ == '__main__':

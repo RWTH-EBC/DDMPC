@@ -156,7 +156,7 @@ class Output(Node):
 
     def get_config(self) -> dict:
         config = dict()
-        config['output'] = f'{self.source.name}'
+        config['feature'] = f'{self.source.name}'
 
         return config
 
