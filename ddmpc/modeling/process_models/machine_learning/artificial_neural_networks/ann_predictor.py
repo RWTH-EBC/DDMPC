@@ -27,6 +27,7 @@ class NeuralNetwork(Predictor):
 
         self.sequential:    Optional[Sequential] = None
         self.name:          Optional[str] = None
+        self.casadi_ann: Optional[CasadiSequential] = None
 
     def __hash__(self):
 
@@ -38,13 +39,12 @@ class NeuralNetwork(Predictor):
     def __repr__(self):
         return f'NeuralNetwork({self.name})'
 
-    @property
-    def casadi_ann(self) -> CasadiSequential:
-        """ returns the casadi neural network """
+    def update_casadi_model(self):
+        """ updates the casadi neural network """
 
         assert self.sequential.built, 'Please build the Sequential Keras model before trying to update the casadi ann.'
-
-        return CasadiSequential(model=self.sequential)
+        assert self.casadi_ann, 'Please fit the Sequential Keras model before trying to update the casadi ann.'
+        self.casadi_ann = CasadiSequential(model=self.sequential)
 
     def predict(self, input_values: Union[list, ca.MX, ca.DM, np.ndarray]) -> Union[list, ca.MX, ca.DM, np.ndarray]:
         """ calculates the prediction to a given input """
@@ -107,6 +107,9 @@ class NeuralNetwork(Predictor):
             validation_data=(training_data.xValid.astype(np.float32), training_data.yValid.astype(np.float32)),
             **kwargs,
         )
+
+        # build casadi ANN
+        self.casadi_ann = CasadiSequential(model=self.sequential)
 
     def test(
             self,
