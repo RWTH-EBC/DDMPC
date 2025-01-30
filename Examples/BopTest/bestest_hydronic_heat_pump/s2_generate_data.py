@@ -6,7 +6,7 @@ This script is used to generate the necessary training data
 
 name = 'pid_data'
 
-TAirRoom.mode = TAirRoom_random  # changes mode previously defined in configuration.py
+TAirRoom.mode = TAirRoom_identification  # changes mode previously defined in configuration.py
 
 # PID controller for the HP
 # step size of controller must be equals or greater than the step size of the system
@@ -44,3 +44,6 @@ pid_plotter.plot(df=dc_random.df, show_plot=True, save_plot=True, save_name=f'{n
 
 # saves DataHandler with training data to pickle (directory: /stored_data/data/ )
 dh.save(name, override=True)
+
+system.close()
+system.stop()

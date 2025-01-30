@@ -51,7 +51,7 @@ class BopTest(System):
         self.url_forecast:          str = urljoin(self.url, url='forecast')
         self.url_forecast_points:   str = urljoin(self.url, url='forecast_points')
         self.url_kpi:               str = urljoin(self.url, url='kpi')
-        self.url_stop:               str = urljoin(self.url, url='stop')
+        self.url_stop:              str = urljoin(self.url, url='stop')
 
         self.test_case: str = test_case
         self.use_boptest_service: bool = use_boptest_service

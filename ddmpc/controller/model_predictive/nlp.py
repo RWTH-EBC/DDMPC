@@ -21,23 +21,25 @@ class Objective:
 
     def __init__(
             self,
-            feature:        Feature,
-            cost:           Cost,
+            feature: Feature,
+            cost: Cost,
     ):
         """
         :param feature: feature to weight in the cost function
         :param cost: cost function to apply to the feature
         """
 
-        self.feature:       Feature = feature
-        self.cost:          Cost = cost
+        self.feature: Feature = feature
+        self.cost: Cost = cost
 
     def __str__(self):
         return f'Objective(feature={self.feature})'
 
     def __call__(self, mx: MX) -> MX:
-
         return self.cost(mx)
+
+    def set_feature(self, feature: Feature):
+        self.feature: Feature = feature
 
     def get_config(self) -> dict:
         config = dict()
@@ -53,9 +55,9 @@ class Constraint:
 
     def __init__(
             self,
-            feature:     Feature,
-            lb:         float,
-            ub:         float,
+            feature: Feature,
+            lb: float,
+            ub: float,
     ):
         """
         :param feature: feature to add constraints to
@@ -63,13 +65,12 @@ class Constraint:
         :param ub: upper bound for the constraint
         """
 
-        self.feature:       Feature = feature
+        self.feature: Feature = feature
 
-        self.lb:            float = lb
-        self.ub:            float = ub
+        self.lb: float = lb
+        self.ub: float = ub
 
     def get(self, k: int) -> 'NLPConstraint':
-
         return NLPConstraint(
             expression=self.feature.source[k],
             lb=self.lb,
@@ -95,8 +96,8 @@ class NLPVariable(ABC):
 
     def __init__(
             self,
-            feature:    Feature,
-            k:          int,
+            feature: Feature,
+            k: int,
     ):
         """ variable for the nlp """
 
@@ -125,9 +126,7 @@ class NLPVariable(ABC):
         pass
 
     def __eq__(self, other):
-
         if isinstance(other, NLPVariable):
-
             return self.feature == other.feature and type(self) == type(other) and self.k == other.k
 
         return False
@@ -140,10 +139,9 @@ class NLPValue(NLPVariable):
 
     def __init__(
             self,
-            feature:    Feature,
-            k:          int,
+            feature: Feature,
+            k: int,
     ):
-
         super(NLPValue, self).__init__(feature=feature, k=k)
 
     @property
@@ -165,8 +163,8 @@ class NLPTarget(NLPVariable):
 
     def __init__(
             self,
-            feature:    Controlled,
-            k:          int,
+            feature: Controlled,
+            k: int,
     ):
         super(NLPTarget, self).__init__(feature=feature, k=k)
 
@@ -178,7 +176,6 @@ class NLPTarget(NLPVariable):
 
     @property
     def col_name(self):
-
         self.feature: Controlled
         return self.feature.col_name_target
 
@@ -193,8 +190,8 @@ class NLPLowerBound(NLPVariable):
 
     def __init__(
             self,
-            feature:    Controlled,
-            k:          int,
+            feature: Controlled,
+            k: int,
     ):
         super(NLPLowerBound, self).__init__(feature=feature, k=k)
 
@@ -279,9 +276,9 @@ class NLPConstraint:
     ):
         """ constraint for the nlp """
 
-        self.expression:    MX = expression
-        self.lb:            float = lb
-        self.ub:            float = ub
+        self.expression: MX = expression
+        self.lb: float = lb
+        self.ub: float = ub
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.lb} < {self.expression} < {self.ub})'
@@ -309,15 +306,15 @@ class NLPSolution:
 
     def __init__(
             self,
-            par_vars:   list,
-            opt_vars:   list,
-            par_vals:   list,
-            opt_vals:   list,
-            inp_map:    dict[Predictor, dict[int, list[NLPVariable]]],
+            par_vars: list,
+            opt_vars: list,
+            par_vals: list,
+            opt_vals: list,
+            inp_map: dict[Predictor, dict[int, list[NLPVariable]]],
 
-            success:    bool,
-            status:     str,
-            runtime:    float,
+            success: bool,
+            status: str,
+            runtime: float,
     ):
         assert len(par_vals) == len(par_vars)
         assert len(opt_vals) == len(opt_vars)
@@ -342,7 +339,7 @@ class NLPSolution:
         self.inp_vals = inp_map
 
         self.success: bool = success
-        self.status:  str = status
+        self.status: str = status
         self.runtime: float = runtime
 
     def __str__(self):
@@ -412,30 +409,30 @@ class NLP:
 
     def __init__(
             self,
-            N:              int,
-            model:          Model,
+            N: int,
+            model: Model,
             control_change_step: int = 1,
-            objectives:     list[Objective] = None,
-            constraints:    list[Constraint] = None,
+            objectives: list[Objective] = None,
+            constraints: list[Constraint] = None,
     ):
 
-        self.model:             Model = model
-        self.objectives:        list[Objective] = objectives
-        self.constraints:       list[Constraint] = constraints
+        self.model: Model = model
+        self.objectives: list[Objective] = objectives
+        self.constraints: list[Constraint] = constraints
 
-        self._par_vars:         list[NLPVariable] = list()
-        self._opt_vars:         list[NLPVariable] = list()
-        self._var_map:          dict[tuple[Source, int], NLPVariable] = dict()
-        self._inp_map:          dict[Predictor, dict[int, list[NLPVariable]]] = dict()
+        self._par_vars: list[NLPVariable] = list()
+        self._opt_vars: list[NLPVariable] = list()
+        self._var_map: dict[tuple[Source, int], NLPVariable] = dict()
+        self._inp_map: dict[Predictor, dict[int, list[NLPVariable]]] = dict()
 
-        self._constraints:      list[NLPConstraint] = list()
-        self._objectives:       list[NLPObjective] = list()
+        self._constraints: list[NLPConstraint] = list()
+        self._objectives: list[NLPObjective] = list()
 
-        self.solution:          Optional[NLPSolution] = None
+        self.solution: Optional[NLPSolution] = None
 
-        self.model:             Model = model
-        self.max_lag:           Optional[int] = None
-        self.N:                 int = N
+        self.model: Model = model
+        self.max_lag: Optional[int] = None
+        self.N: int = N
         assert N % control_change_step == 0, "NLP Horizon N must be a multiple of control change step!"
         self.control_change_step = control_change_step
 
@@ -459,13 +456,11 @@ class NLP:
                     assign(sub)
 
         for feature in self.model.features:
-
             self.idx_map[feature.source] = 0
 
             assign(feature.source)
 
         for predictor in predictors:
-
             for inp in predictor.inputs:
 
                 if inp.source in self.idx_map:
@@ -511,11 +506,9 @@ class NLP:
             assert isinstance(c.source, Constructed)
 
             for k in range(-self.idx_map[c.source], 0):
-
                 self._add_par_var(NLPValue(feature=c, k=k))
 
             for k in range(0, self.N + 1):
-
                 self._add_opt_var(NLPValue(feature=c, k=k))
 
     def _add_par_var(self, par_var: NLPVariable):
@@ -557,9 +550,9 @@ class NLP:
 
                     # iterate backwards over the lag
                     for i in range(k - 1, k - inp.lag - 1, -1):
-
                         assert (inp.source, i) in self._var_map.keys(), \
-                            KeyError(f'Please make sure {(inp.source, i)} is part of the Model. max_lag={self.idx_map[inp.source]}')
+                            KeyError(
+                                f'Please make sure {(inp.source, i)} is part of the Model. max_lag={self.idx_map[inp.source]}')
 
                         nlp_var = self._var_map[inp.source, i]
 
@@ -740,12 +733,14 @@ class NLP:
                     cold_start_values.append((lb + ub) / 2)
                 else:
                     cold_start_values.append(0)
-                    warnings.warn(f'Mode for feature {opt_var.feature.source.name} does not provide lb, ub or target '
-                                  f'for cold start initialization, using 0 as default.')
+                    warnings.warn(
+                        f'Mode for feature {opt_var.feature.source.name} does not provide lb, ub or target '
+                        f'for cold start initialization, using 0 as default.')
             else:
                 cold_start_values.append(0)
-                warnings.warn(f'Cold start initialization for class {opt_var.feature.source} not implemented yet, '
-                              f'using 0 as default.')
+                warnings.warn(
+                    f'Cold start initialization for class {opt_var.feature.source} not implemented yet, '
+                    f'using 0 as default.')
         return np.array(cold_start_values)
 
     def summary(self):
@@ -775,15 +770,15 @@ class NLP:
 
     def build(self, predictors: list[Predictor], alg: str = 'ipopt', solver_options: Optional[dict] = None):
 
-        self.max_lag:           int = max([0] + [p.inputs.maxLag for p in predictors])
+        self.max_lag: int = max([0] + [p.inputs.maxLag for p in predictors])
 
-        self._par_vars:         list[NLPVariable] = list()
-        self._opt_vars:         list[NLPVariable] = list()
-        self._var_map:          dict[tuple[Source, int], NLPVariable] = dict()
-        self._inp_map:          dict[Predictor, dict[int, list[NLPVariable]]] = dict()
+        self._par_vars: list[NLPVariable] = list()
+        self._opt_vars: list[NLPVariable] = list()
+        self._var_map: dict[tuple[Source, int], NLPVariable] = dict()
+        self._inp_map: dict[Predictor, dict[int, list[NLPVariable]]] = dict()
 
-        self._constraints:      list[NLPConstraint] = list()
-        self._objectives:       list[NLPObjective] = list()
+        self._constraints: list[NLPConstraint] = list()
+        self._objectives: list[NLPObjective] = list()
 
         self._map_indices(*predictors)
 

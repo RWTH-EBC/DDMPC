@@ -465,7 +465,7 @@ class Addition(Constructed):
             b1: Union[Source, Feature],
             b2: Union[Source, Feature],
             plt_opts: Optional[PlotOptions] = None,
-            name: Optional[str] = None,  # if no name is given, it will be set as Addition(<b1.name> - <b2.name>)
+            name: Optional[str] = None,  # if no name is given, it will be set as Addition(<b1.name> + <b2.name>)
     ):
 
         if isinstance(b1, Feature):
